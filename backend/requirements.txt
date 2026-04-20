@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+openai>=1.66.0
+tavily-python
+python-dotenv
+requests
+pydantic
+slowapi
