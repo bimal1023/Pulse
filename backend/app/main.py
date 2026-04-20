@@ -17,14 +17,6 @@ limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI()
 app.state.limiter = limiter
-app.add_middleware(SlowAPIMiddleware)
-
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=429,
-        content={"detail": "Too many requests. Please wait before trying again."}
-    )
 
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*")
 origins = ["*"] if ALLOWED_ORIGINS == "*" else ALLOWED_ORIGINS.split(",")
@@ -36,6 +28,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(SlowAPIMiddleware)
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Too many requests. Please wait before trying again."}
+    )
 
 init_db()
 
