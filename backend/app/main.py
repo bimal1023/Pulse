@@ -1,4 +1,3 @@
-import os
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -17,12 +16,9 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
 app.state.limiter = limiter
 
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*")
-origins = ["*"] if ALLOWED_ORIGINS == "*" else ALLOWED_ORIGINS.split(",")
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
