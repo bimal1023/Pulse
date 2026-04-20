@@ -40,6 +40,7 @@ function App() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef(null);
 
   const fetchHistory = async () => {
@@ -69,6 +70,7 @@ function App() {
     setError("");
     setStreamingContent("");
     setActiveTool("");
+    setSidebarOpen(false);
 
     try {
       const res = await fetch(`${API_BASE}/run-agent`, {
@@ -129,6 +131,7 @@ function App() {
         { role: "assistant", content: item.final_answer },
       ]);
       setStreamingContent("");
+      setSidebarOpen(false);
     } catch (err) {
       console.error(err);
     }
@@ -140,6 +143,7 @@ function App() {
     setActiveTool("");
     setError("");
     setInput("");
+    setSidebarOpen(false);
   };
 
   const toolLabels = {
@@ -149,48 +153,31 @@ function App() {
   };
 
   return (
-    <div style={{ display: "flex", height: "100svh", overflow: "hidden" }}>
+    <div className="app-shell">
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
 
       {/* Sidebar */}
-      <div style={{
-        width: "260px", flexShrink: 0, borderRight: "1px solid var(--border)",
-        display: "flex", flexDirection: "column", padding: "20px 16px", gap: "12px", overflowY: "auto"
-      }}>
-        <button
-          onClick={startNewChat}
-          style={{
-            padding: "10px 14px", border: "1px solid var(--border)", borderRadius: "8px",
-            background: "transparent", color: "var(--text-h)", cursor: "pointer",
-            fontSize: "14px", fontWeight: 500, textAlign: "left",
-          }}
-        >
-          + New Chat
-        </button>
+      <div className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
+        <button onClick={startNewChat} className="new-chat-btn">+ New Chat</button>
 
-        <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "var(--text)", textTransform: "uppercase", marginTop: "8px" }}>
-          History
-        </div>
+        <div className="history-label">History</div>
 
         {history.length === 0 && (
-          <p style={{ fontSize: "13px", color: "var(--text)" }}>No history yet.</p>
+          <p style={{ fontSize: "13px", color: "var(--text)", margin: 0 }}>No history yet.</p>
         )}
 
         {history.map((item) => (
           <div
             key={item.id}
             onClick={() => loadHistoryItem(item.id)}
-            style={{
-              padding: "10px 12px", borderRadius: "8px", cursor: "pointer",
-              fontSize: "13px", color: "var(--text-h)", lineHeight: 1.4,
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "var(--accent-bg)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+            className="history-item"
           >
-            <div style={{ fontWeight: 500, marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {item.task}
-            </div>
-            <div style={{ fontSize: "11px", color: "var(--text)" }}>
+            <div className="history-item-title">{item.task}</div>
+            <div className="history-item-date">
               {new Date(item.timestamp).toLocaleDateString()}
             </div>
           </div>
@@ -198,15 +185,18 @@ function App() {
       </div>
 
       {/* Main chat area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div className="chat-area">
 
         {/* Header */}
-        <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
+        <div className="header">
+          <button className="menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            ☰
+          </button>
           <h1 style={{ margin: 0, fontSize: "20px" }}>Pulse</h1>
         </div>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div className="messages">
 
           {messages.length === 0 && !loading && (
             <div style={{ margin: "auto", textAlign: "center", color: "var(--text)" }}>
@@ -216,30 +206,19 @@ function App() {
           )}
 
           {messages.map((msg, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-              <div style={{
-                maxWidth: "70%", padding: "12px 16px", borderRadius: "14px", fontSize: "15px",
-                background: msg.role === "user" ? "var(--accent)" : "var(--code-bg)",
-                color: msg.role === "user" ? "white" : "var(--text-h)",
-                borderBottomRightRadius: msg.role === "user" ? "4px" : "14px",
-                borderBottomLeftRadius: msg.role === "assistant" ? "4px" : "14px",
-              }}>
+            <div key={i} className={`message-row ${msg.role}`}>
+              <div className={`bubble ${msg.role}`}>
                 <FormattedText text={msg.content} />
               </div>
             </div>
           ))}
 
-          {/* Streaming bubble */}
           {(streamingContent || activeTool) && (
-            <div style={{ display: "flex", justifyContent: "flex-start" }}>
-              <div style={{
-                maxWidth: "70%", padding: "12px 16px", borderRadius: "14px",
-                borderBottomLeftRadius: "4px", fontSize: "15px",
-                background: "var(--code-bg)", color: "var(--text-h)",
-              }}>
+            <div className="message-row assistant">
+              <div className="bubble assistant">
                 {activeTool && !streamingContent && (
                   <span style={{ color: "var(--accent)", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulse 1s infinite" }} />
+                    <span className="pulse-dot" />
                     {toolLabels[activeTool] ?? "Working..."}
                   </span>
                 )}
@@ -253,48 +232,297 @@ function App() {
 
         {/* Error */}
         {error && (
-          <div style={{ margin: "0 24px 12px", padding: "12px 14px", background: "#fee2e2", color: "#991b1b", borderRadius: "10px", fontSize: "14px" }}>
-            {error}
-          </div>
+          <div className="error-banner">{error}</div>
         )}
 
         {/* Input */}
-        <div style={{ padding: "16px 24px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
-          <div style={{ display: "flex", gap: "10px" }}>
+        <div className="input-area">
+          <div className="input-row">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
               placeholder={messages.length > 0 ? "Ask a follow-up..." : "Ask anything..."}
-              style={{
-                flex: 1, padding: "14px 16px",
-                border: "1px solid var(--border)", borderRadius: "10px",
-                fontSize: "15px", background: "var(--bg)",
-                color: "var(--text-h)", outline: "none",
-              }}
+              className="chat-input"
             />
             <button
               onClick={sendMessage}
               disabled={loading || !input.trim()}
-              style={{
-                padding: "14px 22px", border: "none", borderRadius: "10px",
-                background: loading ? "var(--border)" : "var(--accent)",
-                color: "white", cursor: loading ? "not-allowed" : "pointer",
-                fontSize: "15px", fontWeight: 500, whiteSpace: "nowrap",
-                transition: "background 0.2s",
-              }}
+              className={`send-btn ${loading ? "loading" : ""}`}
             >
-              {loading ? "Thinking..." : "Send"}
+              {loading ? "..." : "Send"}
             </button>
           </div>
         </div>
       </div>
 
       <style>{`
+        * { box-sizing: border-box; }
+
+        .app-shell {
+          display: flex;
+          height: 100svh;
+          overflow: hidden;
+          position: relative;
+        }
+
+        /* Sidebar */
+        .sidebar {
+          width: 260px;
+          flex-shrink: 0;
+          border-right: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          padding: 20px 16px;
+          gap: 12px;
+          overflow-y: auto;
+          background: var(--bg);
+        }
+
+        .sidebar-overlay {
+          display: none;
+        }
+
+        .new-chat-btn {
+          padding: 10px 14px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: transparent;
+          color: var(--text-h);
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          text-align: left;
+        }
+
+        .history-label {
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          color: var(--text);
+          text-transform: uppercase;
+          margin-top: 8px;
+        }
+
+        .history-item {
+          padding: 10px 12px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 13px;
+          color: var(--text-h);
+          line-height: 1.4;
+          transition: background 0.15s;
+        }
+
+        .history-item:hover {
+          background: var(--accent-bg);
+        }
+
+        .history-item-title {
+          font-weight: 500;
+          margin-bottom: 2px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .history-item-date {
+          font-size: 11px;
+          color: var(--text);
+        }
+
+        /* Chat area */
+        .chat-area {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-width: 0;
+        }
+
+        .header {
+          padding: 16px 24px;
+          border-bottom: 1px solid var(--border);
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .menu-btn {
+          display: none;
+          background: none;
+          border: none;
+          font-size: 20px;
+          cursor: pointer;
+          color: var(--text-h);
+          padding: 4px;
+          line-height: 1;
+        }
+
+        .messages {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .message-row {
+          display: flex;
+        }
+
+        .message-row.user { justify-content: flex-end; }
+        .message-row.assistant { justify-content: flex-start; }
+
+        .bubble {
+          max-width: 70%;
+          padding: 12px 16px;
+          border-radius: 14px;
+          font-size: 15px;
+        }
+
+        .bubble.user {
+          background: var(--accent);
+          color: white;
+          border-bottom-right-radius: 4px;
+        }
+
+        .bubble.assistant {
+          background: var(--code-bg);
+          color: var(--text-h);
+          border-bottom-left-radius: 4px;
+        }
+
+        .pulse-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--accent);
+          display: inline-block;
+          animation: pulse 1s infinite;
+        }
+
+        .error-banner {
+          margin: 0 24px 12px;
+          padding: 12px 14px;
+          background: #fee2e2;
+          color: #991b1b;
+          border-radius: 10px;
+          font-size: 14px;
+        }
+
+        .input-area {
+          padding: 16px 24px;
+          border-top: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+
+        .input-row {
+          display: flex;
+          gap: 10px;
+        }
+
+        .chat-input {
+          flex: 1;
+          padding: 14px 16px;
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          font-size: 15px;
+          background: var(--bg);
+          color: var(--text-h);
+          outline: none;
+          min-width: 0;
+        }
+
+        .send-btn {
+          padding: 14px 22px;
+          border: none;
+          border-radius: 10px;
+          background: var(--accent);
+          color: white;
+          cursor: pointer;
+          font-size: 15px;
+          font-weight: 500;
+          white-space: nowrap;
+          transition: background 0.2s;
+          flex-shrink: 0;
+        }
+
+        .send-btn.loading {
+          background: var(--border);
+          cursor: not-allowed;
+        }
+
+        .send-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
+        }
+
+        /* Mobile */
+        @media (max-width: 640px) {
+          .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 100;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            width: 80%;
+            max-width: 300px;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+          }
+
+          .sidebar.sidebar-open {
+            transform: translateX(0);
+          }
+
+          .sidebar-overlay {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+          }
+
+          .menu-btn {
+            display: block;
+          }
+
+          .header {
+            padding: 12px 16px;
+          }
+
+          .messages {
+            padding: 16px;
+            gap: 14px;
+          }
+
+          .bubble {
+            max-width: 85%;
+            font-size: 14px;
+          }
+
+          .input-area {
+            padding: 12px 16px;
+          }
+
+          .send-btn {
+            padding: 14px 16px;
+            font-size: 14px;
+          }
+
+          .error-banner {
+            margin: 0 16px 10px;
+          }
         }
       `}</style>
     </div>
