@@ -77,3 +77,32 @@ def send_email(subject:str,body:str)-> str:
         return f"Email sent successfully to{to}"
     except Exception as e:
         return f"Failed to send email:{str(e)}"
+def get_github_trending(language: str = "", since: str = "daily") -> str:
+    url = "https://api.github.com/search/repositories"
+    params = {
+        "q": f"stars:>100{' language:' + language if language else ''}",
+        "sort": "stars",
+        "order": "desc",
+        "per_page": 5
+    }
+    headers = {"Accept": "application/vnd.github.v3+json"}
+
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        repos = response.json().get("items", [])
+
+        if not repos:
+            return "No trending repositories found."
+
+        results = []
+        for repo in repos:
+            results.append(
+                f"Name: {repo['full_name']}\n"
+                f"Description: {repo['description']}\n"
+                f"Stars: {repo['stargazers_count']}\n"
+                f"URL: {repo['html_url']}\n"
+            )
+        return "\n".join(results)
+    except Exception as e:
+        return f"Error fetching GitHub trending: {str(e)}"

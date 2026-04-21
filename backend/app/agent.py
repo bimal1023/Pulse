@@ -1,7 +1,7 @@
 import json
 from openai import OpenAI
 from app.config import OPENAI_API_KEY, MODEL_NAME
-from app.tools import search_web, get_news, get_wikipedia_summary,send_email
+from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -73,7 +73,28 @@ tools = [
                 "required": ["subject", "body"]
             }
         }
+    },
+    {
+    "type": "function",
+    "function": {
+        "name": "get_github_trending",
+        "description": "Get trending GitHub repositories by programming language.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "language": {
+                    "type": "string",
+                    "description": "Programming language to filter by e.g. python, javascript. Leave empty for all languages."
+                },
+                "since": {
+                    "type": "string",
+                    "description": "Time range: daily, weekly, or monthly"
+                }
+            },
+            "required": []
+        }
     }
+}
 ]
 
 
@@ -124,6 +145,11 @@ def run_agent(messages: list):
                     result = get_wikipedia_summary(args["topic"])
                 elif tool_name == "send_email":
                     result = send_email(args["subject"], args["body"])
+                elif tool_name=="get_github_trending":
+                    result=get_github_trending(
+                        args.get("language",""),
+                        args.get("since","daily")
+                    )
                 else:
                     result = f"Unknown tool: {tool_name}"
 
