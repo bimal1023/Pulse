@@ -106,3 +106,38 @@ def get_github_trending(language: str = "", since: str = "daily") -> str:
         return "\n".join(results)
     except Exception as e:
         return f"Error fetching GitHub trending: {str(e)}"
+def get_arxiv_papers(topic: str) -> str:
+    url = "https://export.arxiv.org/api/query"
+    params = {
+        "search_query": f"all:{topic}",
+        "start": 0,
+        "max_results": 5,
+        "sortBy": "submittedDate",
+        "sortOrder": "descending"
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(response.text)
+        ns = {"atom": "http://www.w3.org/2005/Atom"}
+        entries = root.findall("atom:entry", ns)
+
+        if not entries:
+            return "No papers found."
+
+        results = []
+        for entry in entries:
+            title = entry.find("atom:title", ns).text.strip()
+            summary = entry.find("atom:summary", ns).text.strip()[:300]
+            link = entry.find("atom:id", ns).text.strip()
+            results.append(
+                f"Title: {title}\n"
+                f"Summary: {summary}...\n"
+                f"Link: {link}\n"
+            )
+        return "\n".join(results)
+    except Exception as e:
+        return f"Error fetching papers: {str(e)}"

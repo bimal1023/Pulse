@@ -1,7 +1,7 @@
 import json
 from openai import OpenAI
 from app.config import OPENAI_API_KEY, MODEL_NAME
-from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending
+from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending, get_arxiv_papers
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -94,6 +94,23 @@ tools = [
             "required": []
         }
     }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "get_arxiv_papers",
+        "description": "Get the latest research papers from Arxiv on a given topic.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "topic": {
+                    "type": "string",
+                    "description": "The research topic to search for e.g. machine learning, quantum computing"
+                }
+            },
+            "required": ["topic"]
+        }
+    }
 }
 ]
 
@@ -150,6 +167,8 @@ def run_agent(messages: list):
                         args.get("language",""),
                         args.get("since","daily")
                     )
+                elif tool_name=="get_arxiv_papers":
+                    result=get_arxiv_papers(args["topic"])
                 else:
                     result = f"Unknown tool: {tool_name}"
 
