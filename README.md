@@ -1,19 +1,39 @@
 # Pulse
 
-An AI-powered research assistant that searches the web, reads the latest news, and looks up Wikipedia — all in a clean, streaming chat interface.
+A personal AI assistant and automation agent that searches the web, reads the latest news, fetches research papers, monitors GitHub trends, and takes real actions like sending emails and Discord messages — all in a clean, streaming chat interface.
 
-Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavily** · **GNews**
+Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavily** · **GNews** · **APScheduler**
 
 ---
 
 ## Features
 
-- **Multi-tool agent** — automatically decides whether to search the web, fetch news, or query Wikipedia based on your question
+- **Multi-tool agent** — automatically decides which tool to use based on your question
 - **Streaming responses** — tokens stream in real time as the model thinks
 - **Live tool indicators** — shows which tool is running before the answer appears
-- **Conversation history** — past sessions are saved to a local SQLite database and accessible from the sidebar
+- **Conversation history** — past sessions are saved to SQLite and accessible from the sidebar
+- **Daily AI briefing** — automatically emails a polished AI news summary every morning
+- **Email automation** — agent can send summaries and results to your inbox
+- **Discord integration** — agent can post messages to your Discord channel
+- **GitHub trending** — fetch trending repositories by language
+- **Arxiv research** — fetch latest academic papers on any topic
+- **Mobile responsive** — works on phone and desktop
 - **Rate limiting** — 5 requests/minute per IP via SlowAPI
-- **Input validation** — message roles, lengths, and content are validated server-side via Pydantic
+- **Input validation** — message roles, lengths, and content validated via Pydantic
+
+---
+
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_web` | Search the web via Tavily |
+| `get_news` | Fetch latest news articles via GNews |
+| `get_wikipedia_summary` | Get factual summaries from Wikipedia |
+| `get_github_trending` | Get trending GitHub repos by language |
+| `get_arxiv_papers` | Fetch latest research papers from Arxiv |
+| `send_email` | Send a summary email to the owner |
+| `send_discord` | Post a message to the owner's Discord channel |
 
 ---
 
@@ -26,7 +46,12 @@ Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavil
 | Web Search | Tavily API |
 | News | GNews API |
 | Knowledge | Wikipedia REST API |
-| Database | SQLite (ephemeral, local) |
+| GitHub | GitHub REST API |
+| Research | Arxiv API |
+| Email | Gmail SMTP |
+| Discord | Discord Webhooks |
+| Scheduler | APScheduler |
+| Database | SQLite |
 | Frontend | React 19, Vite 8 |
 | Rate Limiting | SlowAPI |
 
@@ -44,8 +69,10 @@ pulse/
 │   │   ├── history.py      # Save and load task history
 │   │   ├── main.py         # FastAPI app, routes, CORS, rate limiting
 │   │   ├── schemas.py      # Pydantic request/message models
-│   │   └── tools.py        # search_web, get_news, get_wikipedia_summary
-│   ├── .env                #  secrets (not committed)
+│   │   ├── scheduler.py    # Daily AI briefing scheduler
+│   │   └── tools.py        # All 7 agent tools
+│   ├── Dockerfile
+│   ├── .env                # Secrets (not committed)
 │   └── requirements.txt
 └── frontend/
     ├── src/
@@ -72,7 +99,7 @@ pulse/
 
 ```bash
 git clone https://github.com/bimal1023/Pulse.git
-cd pulse
+cd Pulse
 ```
 
 ### 2. Backend setup
@@ -91,6 +118,14 @@ OPENAI_API_KEY=sk-...
 TAVILY_API_KEY=tvly-...
 GNEWS_API_KEY=...
 ALLOWED_ORIGINS=http://localhost:5173
+
+# Email (Gmail SMTP)
+EMAIL_SENDER=your-gmail@gmail.com
+EMAIL_PASSWORD=your-16-char-app-password
+EMAIL_RECEIVER=your-gmail@gmail.com
+
+# Discord
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
 
 Start the server:
@@ -106,7 +141,7 @@ cd ../frontend
 npm install
 ```
 
-Optionally create a `.env.local` file if your backend runs elsewhere:
+Optionally create a `.env.local` file:
 
 ```env
 VITE_API_BASE=http://127.0.0.1:8002
@@ -119,6 +154,12 @@ npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173).
+
+---
+
+## Daily AI Briefing
+
+Pulse automatically sends a polished AI news summary to your email every morning at 8am ET via APScheduler.
 
 ---
 
@@ -157,37 +198,32 @@ Returns a single task by ID.
 
 ## Deployment
 
-### Backend
+### Backend (Render)
 
-Set the following environment variables on your server:
+Set the following environment variables on Render:
 
 ```env
 OPENAI_API_KEY=...
 TAVILY_API_KEY=...
 GNEWS_API_KEY=...
-ALLOWED_ORIGINS=https://your-frontend-domain.com
+ALLOWED_ORIGINS=https://your-vercel-app.vercel.app
+EMAIL_SENDER=...
+EMAIL_PASSWORD=...
+EMAIL_RECEIVER=...
+DISCORD_WEBHOOK_URL=...
 ```
 
-Run with a production ASGI server:
+Render will auto-detect the `Dockerfile` in `backend/` and deploy automatically.
 
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8002
-```
-
-### Frontend
+### Frontend (Vercel)
 
 Set the backend URL as a build-time env var:
 
 ```env
-VITE_API_BASE=https://your-backend-domain.com
+VITE_API_BASE=https://your-render-backend.onrender.com
 ```
 
-Build and serve:
-
-```bash
-npm run build
-# deploy the dist/ folder to Vercel, Netlify, or any static host
-```
+Then deploy — Vercel auto-detects Vite and builds correctly.
 
 ---
 
