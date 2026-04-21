@@ -1,6 +1,9 @@
 from tavily import TavilyClient
 import os
 import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
@@ -58,3 +61,19 @@ def get_wikipedia_summary(topic:str) -> str:
         return data.get("extract","No summary found.")
     except Exception as e:
         return f"Error fetching Wikipedia:{str(e)}"
+def send_email(subject:str,body:str)-> str:
+    sender=os.getenv("EMAIL_SENDER")
+    password=os.getenv("EMAIL_PASSWORD")
+    to=os.getenv("EMAIL_RECEIVER")
+    msg=MIMEMultipart()
+    msg["From"]=sender
+    msg["To"]=to
+    msg["Subject"]=subject
+    msg.attach(MIMEText(body,"plain"))
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com",465)as server:
+            server.login(sender,password)
+            server.sendmail(sender,to,msg.as_string())
+        return f"Email sent successfully to{to}"
+    except Exception as e:
+        return f"Failed to send email:{str(e)}"

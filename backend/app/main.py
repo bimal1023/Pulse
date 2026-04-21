@@ -10,6 +10,7 @@ from app.schemas import AgentRequest
 from app.history import save_task_history, load_task_history, load_task_by_id
 from app.database import init_db
 import json
+from app.scheduler import start_scheduler
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -32,7 +33,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     )
 
 init_db()
-
+start_scheduler()
 @app.get("/")
 def root():
     return {"message": "Backend is working now"}

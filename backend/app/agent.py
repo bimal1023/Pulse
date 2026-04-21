@@ -1,7 +1,7 @@
 import json
 from openai import OpenAI
 from app.config import OPENAI_API_KEY, MODEL_NAME
-from app.tools import search_web, get_news, get_wikipedia_summary
+from app.tools import search_web, get_news, get_wikipedia_summary,send_email
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -58,6 +58,21 @@ tools = [
                 "required": ["topic"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "send_email",
+            "description": "Send an email summary to the owner. Do not ask for or accept an email address.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subject": {"type": "string", "description": "Email subject"},
+                    "body": {"type": "string", "description": "Email body content"}
+                },
+                "required": ["subject", "body"]
+            }
+        }
     }
 ]
 
@@ -107,6 +122,8 @@ def run_agent(messages: list):
                     result = get_news(args["topic"])
                 elif tool_name == "get_wikipedia_summary":
                     result = get_wikipedia_summary(args["topic"])
+                elif tool_name == "send_email":
+                    result = send_email(args["subject"], args["body"])
                 else:
                     result = f"Unknown tool: {tool_name}"
 
