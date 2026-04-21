@@ -141,3 +141,16 @@ def get_arxiv_papers(topic: str) -> str:
         return "\n".join(results)
     except Exception as e:
         return f"Error fetching papers: {str(e)}"
+def send_discord(message: str) -> str:
+    webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
+    
+    try:
+        response = requests.post(
+            webhook_url,
+            json={"content": message},
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return "Message sent to Discord successfully!"
+    except Exception as e:
+        return f"Error sending Discord message: {str(e)}"

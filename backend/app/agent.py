@@ -1,7 +1,7 @@
 import json
 from openai import OpenAI
 from app.config import OPENAI_API_KEY, MODEL_NAME
-from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending, get_arxiv_papers
+from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending, get_arxiv_papers,send_discord
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -111,6 +111,23 @@ tools = [
             "required": ["topic"]
         }
     }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "send_discord",
+        "description": "Send a message to the owner's Discord channel.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "description": "The message to send to Discord"
+                }
+            },
+            "required": ["message"]
+        }
+    }
 }
 ]
 
@@ -169,6 +186,8 @@ def run_agent(messages: list):
                     )
                 elif tool_name=="get_arxiv_papers":
                     result=get_arxiv_papers(args["topic"])
+                elif tool_name=="send_discord":
+                    result=send_discord(args["message"])
                 else:
                     result = f"Unknown tool: {tool_name}"
 
