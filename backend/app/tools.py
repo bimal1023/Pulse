@@ -154,3 +154,46 @@ def send_discord(message: str) -> str:
         return "Message sent to Discord successfully!"
     except Exception as e:
         return f"Error sending Discord message: {str(e)}"
+
+def get_jobs(keywords: str = "machine learning engineer") -> str:
+    app_id = os.getenv("ADZUNA_APP_ID")
+    app_key = os.getenv("ADZUNA_APP_KEY")
+    url = "https://api.adzuna.com/v1/api/jobs/us/search/1"
+    params = {
+        "app_id": app_id,
+        "app_key": app_key,
+        "what": keywords,
+        "results_per_page": 5,
+        "sort_by": "date"
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        jobs = data.get("results", [])
+
+        if not jobs:
+            return "No jobs found."
+
+        results = []
+        for job in jobs:
+            title = job.get("title", "")
+            company = job.get("company", {}).get("display_name", "")
+            location = job.get("location", {}).get("display_name", "")
+            salary_min = job.get("salary_min", "N/A")
+            salary_max = job.get("salary_max", "N/A")
+            link = job.get("redirect_url", "")
+            description = job.get("description", "")[:200]
+
+            results.append(
+                f"Title: {title}\n"
+                f"Company: {company}\n"
+                f"Location: {location}\n"
+                f"Salary: ${salary_min} - ${salary_max}\n"
+                f"Description: {description}...\n"
+                f"Link: {link}\n"
+            )
+        return "\n".join(results)
+    except Exception as e:
+        return f"Error fetching jobs: {str(e)}"

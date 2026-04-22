@@ -1,7 +1,7 @@
 import json
 from openai import OpenAI
 from app.config import OPENAI_API_KEY, MODEL_NAME
-from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending, get_arxiv_papers,send_discord
+from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending, get_arxiv_papers,send_discord,get_jobs
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -20,6 +20,7 @@ SYSTEM_PROMPT = """You are Pulse, a smart personal AI assistant and automation a
 - Use `get_arxiv_papers` for academic research, scientific papers, and cutting-edge AI research
 - Use `send_email` to email a summary or result to Bimal — never ask for an email address
 - Use `send_discord` to post a message or summary to Bimal's Discord channel
+- Use `get_jobs` for finding AI, ML, automation engineering jobs and internships
 - Always use the most relevant tool — never guess when a tool can give a better answer
 - Chain tools when needed — e.g. fetch news then send via email or Discord
 
@@ -152,6 +153,23 @@ tools = [
             "required": ["message"]
         }
     }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "get_jobs",
+        "description": "Search for latest AI, ML and automation job listings and internships.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "keywords": {
+                    "type": "string",
+                    "description": "Search for latest AI, ML, automation engineering jobs and internships. Searches for roles like ML engineer, AI engineer, AI automation engineer, and related internships."
+                }
+            },
+            "required": ["keywords"]
+        }
+    }
 }
 ]
 
@@ -212,6 +230,8 @@ def run_agent(messages: list):
                     result=get_arxiv_papers(args["topic"])
                 elif tool_name=="send_discord":
                     result=send_discord(args["message"])
+                elif tool_name == "get_jobs":
+                    result = get_jobs(args.get("keywords", "AI ML engineer intern automation"))
                 else:
                     result = f"Unknown tool: {tool_name}"
 
