@@ -16,5 +16,13 @@ def init_db():
             result TEXT NOT NULL
         )
         """)
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS seen_jobs(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_id TEXT UNIQUE NOT NULL,
+            seen_at TEXT NOT NULL
+        )
+        """)
     conn.commit()
     conn.close()
