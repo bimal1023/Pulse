@@ -1,8 +1,8 @@
 # Pulse
 
-A personal AI assistant and automation agent that searches the web, reads the latest news, fetches research papers, monitors GitHub trends, and takes real actions like sending emails and Discord messages — all in a clean, streaming chat interface.
+A personal AI assistant and automation agent that searches the web, reads the latest news, fetches research papers, monitors GitHub trends, finds job matches, and takes real actions like sending emails and Discord messages — all in a clean, streaming chat interface.
 
-Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavily** · **GNews** · **APScheduler**
+Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavily** · **GNews** · **Adzuna** · **APScheduler**
 
 ---
 
@@ -17,6 +17,9 @@ Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavil
 - **Discord integration** — agent can post messages to your Discord channel
 - **GitHub trending** — fetch trending repositories by language
 - **Arxiv research** — fetch latest academic papers on any topic
+- **Job matching** — hourly AI-scored job search via Adzuna, only notifies on new listings
+- **Seen jobs tracker** — SQLite-backed deduplication so you never get duplicate job alerts
+- **Resume-aware scoring** — GPT scores each job against your resume and picks top 5 matches
 - **Mobile responsive** — works on phone and desktop
 - **Rate limiting** — 5 requests/minute per IP via SlowAPI
 - **Input validation** — message roles, lengths, and content validated via Pydantic
@@ -34,6 +37,7 @@ Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavil
 | `get_arxiv_papers` | Fetch latest research papers from Arxiv |
 | `send_email` | Send a summary email to the owner |
 | `send_discord` | Post a message to the owner's Discord channel |
+| `get_jobs` | Search AI/ML job listings and internships via Adzuna |
 
 ---
 
@@ -50,6 +54,7 @@ Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavil
 | Research | Arxiv API |
 | Email | Gmail SMTP |
 | Discord | Discord Webhooks |
+| Job Search | Adzuna API |
 | Scheduler | APScheduler |
 | Database | SQLite |
 | Frontend | React 19, Vite 8 |
@@ -69,8 +74,9 @@ pulse/
 │   │   ├── history.py      # Save and load task history
 │   │   ├── main.py         # FastAPI app, routes, CORS, rate limiting
 │   │   ├── schemas.py      # Pydantic request/message models
-│   │   ├── scheduler.py    # Daily AI briefing scheduler
-│   │   └── tools.py        # All 7 agent tools
+│   │   ├── scheduler.py    # Daily briefing + hourly job matching scheduler
+│   │   ├── tools.py        # All 8 agent tools
+│   │   └── resume.txt      # Resume profile for job matching
 │   ├── Dockerfile
 │   ├── .env                # Secrets (not committed)
 │   └── requirements.txt
@@ -126,6 +132,10 @@ EMAIL_RECEIVER=your-gmail@gmail.com
 
 # Discord
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+
+# Adzuna Job Search
+ADZUNA_APP_ID=...
+ADZUNA_APP_KEY=...
 ```
 
 Start the server:
@@ -160,6 +170,10 @@ Open [http://localhost:5173](http://localhost:5173).
 ## Daily AI Briefing
 
 Pulse automatically sends a polished AI news summary to your email every morning at 8am ET via APScheduler.
+
+## Hourly Job Matching
+
+Every hour, Pulse fetches the latest AI/ML/Data Science job listings from Adzuna, scores them against your resume using GPT, and sends the top 5 matches to your Discord channel. A seen jobs tracker ensures you only get notified when new listings appear — no duplicates.
 
 ---
 
@@ -211,6 +225,8 @@ EMAIL_SENDER=...
 EMAIL_PASSWORD=...
 EMAIL_RECEIVER=...
 DISCORD_WEBHOOK_URL=...
+ADZUNA_APP_ID=...
+ADZUNA_APP_KEY=...
 ```
 
 Render will auto-detect the `Dockerfile` in `backend/` and deploy automatically.
