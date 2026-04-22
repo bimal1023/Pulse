@@ -1,7 +1,7 @@
 Name: Bimal Kumal
 Email: bkumal@student.sjny.edu
 Phone: 917-821-6444
-
+linkedin: https://www.linkedin.com/in/bimal-kumal-aa4101285/
 Education:
 - BS in Computer Science & Data Science, St. Joseph's University New York, Brooklyn NY
 - GPA: 3.948 | Expected: May 2027

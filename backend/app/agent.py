@@ -1,7 +1,7 @@
 import json
 from openai import OpenAI
 from app.config import OPENAI_API_KEY, MODEL_NAME
-from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending, get_arxiv_papers,send_discord,get_jobs
+from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending, get_arxiv_papers,send_discord,get_jobs, generate_cover_letter
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -21,8 +21,10 @@ SYSTEM_PROMPT = """You are Pulse, a smart personal AI assistant and automation a
 - Use `send_email` to email a summary or result to Bimal — never ask for an email address
 - Use `send_discord` to post a message or summary to Bimal's Discord channel
 - Use `get_jobs` for finding AI, ML, automation engineering jobs and internships
+- Use `generate_cover_letter` when Bimal provides a job description and wants a cover letter PDF sent to his email
 - Always use the most relevant tool — never guess when a tool can give a better answer
 - Chain tools when needed — e.g. fetch news then send via email or Discord
+
 
 ## Response Formatting Rules
 - Use clear headings with ## for sections
@@ -170,6 +172,23 @@ tools = [
             "required": ["keywords"]
         }
     }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "generate_cover_letter",
+        "description": "Generate a personalized cover letter as a PDF and send it to Bimal's email based on a job description.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "job_description": {
+                    "type": "string",
+                    "description": "The full job description to generate a cover letter for"
+                }
+            },
+            "required": ["job_description"]
+        }
+    }
 }
 ]
 
@@ -232,6 +251,8 @@ def run_agent(messages: list):
                     result=send_discord(args["message"])
                 elif tool_name == "get_jobs":
                     result = get_jobs(args.get("keywords", "AI ML engineer intern automation"))
+                elif tool_name=="generate_cover_letter":
+                    result=generate_cover_letter(args["job_description"])
                 else:
                     result = f"Unknown tool: {tool_name}"
 

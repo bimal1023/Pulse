@@ -57,6 +57,7 @@ Sent automatically by Pulse
     )
     print("Briefing sent!")
 
+
 def is_job_seen(job_id: str) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
@@ -121,6 +122,7 @@ def send_job_matches():
     message = f"🎯 **New Job Matches Found!**\n\n{scored}\n\n---\nSent by Pulse"
     send_discord(message)
     print("Job matches sent to Discord!")
+
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
