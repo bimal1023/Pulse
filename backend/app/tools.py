@@ -143,7 +143,10 @@ def get_arxiv_papers(topic: str) -> str:
         return f"Error fetching papers: {str(e)}"
 def send_discord(message: str) -> str:
     webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
-    
+
+    import re
+    message = re.sub(r'(https?://\S+)', r'<\1>', message)
+
     try:
         response = requests.post(
             webhook_url,
@@ -155,7 +158,7 @@ def send_discord(message: str) -> str:
     except Exception as e:
         return f"Error sending Discord message: {str(e)}"
 
-def get_jobs(keywords: str = "machine learning engineer") -> str:
+def get_jobs(keywords: str = "python developer") -> str:
     app_id = os.getenv("ADZUNA_APP_ID")
     app_key = os.getenv("ADZUNA_APP_KEY")
     url = "https://api.adzuna.com/v1/api/jobs/us/search/1"

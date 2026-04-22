@@ -1,0 +1,46 @@
+Name: Bimal Kumal
+Email: bkumal@student.sjny.edu
+Phone: 917-821-6444
+
+Education:
+- BS in Computer Science & Data Science, St. Joseph's University New York, Brooklyn NY
+- GPA: 3.948 | Expected: May 2027
+- Relevant Coursework: Data Structures & Algorithms, Advanced Programming, Operating Systems,
+  Database Systems, Linear Algebra, Calculus I & II, Software Engineering, Probability & Statistics
+
+Skills:
+- Programming Languages: Python, Java, SQL, R, JavaScript, TypeScript
+- Machine Learning & AI: PyTorch, TensorFlow, Scikit-learn, XGBoost, Hugging Face, LangChain, RAG, Prompt Engineering
+- Software Engineering: Data Structures, Algorithms, OOP, Debugging, Testing, CI/CD, Git, GitHub
+- Cloud & Databases: AWS App Runner, Docker, PostgreSQL, MySQL
+- Data Tools: Pandas, NumPy, Chroma
+
+Projects:
+- Pulse: Personal AI automation agent with 8 tools — web search, news, GitHub trending, Arxiv research,
+  email automation, Discord integration, daily briefing scheduler, and Adzuna job matching.
+  Built with FastAPI, React, Vite, OpenAI GPT-4.1 mini, Tavily, GNews, APScheduler.
+  Deployed on Render (backend) and Vercel (frontend). Includes Docker, CORS, rate limiting,
+  SSE streaming, SQLite history, and mobile responsive UI.
+- Stellanet: Full-stack web application deployed on AWS App Runner. Stack: Python, FastAPI, PostgreSQL,
+  AWS Nova, Docker, Vercel, Authentication. March 2026.
+- LLM-Based Document Intelligence System (RAG + LangChain): Built a retrieval-augmented generation
+  pipeline using LangChain, FAISS vector embeddings, and OpenAI. Optimized search relevance by 30%.
+- Flower Image Classifier (PyTorch, ResNet18): End-to-end image classification pipeline using transfer
+  learning with ResNet18. Achieved 96.98% validation accuracy.
+
+Experience:
+- Honors Peer Tutor, St. Joseph's University New York (Sep 2023 - Dec 2023)
+  Tutored pre-calculus and introductory programming. Improved student test scores by 20%.
+
+Certifications & Awards:
+- Esse Non Videri Scholar: 90% tuition scholarship for academic merit and leadership
+- Introducing Generative AI with AWS — Accenture
+- Supervised Machine Learning (Andrew Ng) — Stanford Online
+- Dean's List: 5 consecutive semesters (top 5% of students)
+
+Looking For:
+- ML Engineer (full-time or internship)
+- AI Engineer (full-time or internship)
+- AI Automation Engineer (full-time or internship)
+- Machine Learning Research roles
+- Remote or New York based positions
