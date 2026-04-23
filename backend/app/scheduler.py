@@ -124,10 +124,8 @@ def send_job_matches():
     print("Job matches sent to Discord!")
 
 
-def send_motivation_quote():
-    print("Sending motivation quote...")
-
-    time_of_day = "morning" if datetime.now().hour < 12 else "evening"
+def send_motivation_quote(time_of_day: str = "morning"):
+    print(f"Sending {time_of_day} motivation quote...")
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
@@ -138,7 +136,7 @@ def send_motivation_quote():
                     "You are a personal motivational coach for Bimal, a hardworking CS student "
                     "at St. Joseph's University New York who is building AI projects, learning every day, "
                     "and working toward a career in AI/ML engineering.\n\n"
-                    "Generate one powerful, genuine motivational message for his " + time_of_day + ".\n\n"
+                    f"Generate one powerful, genuine motivational message for his {time_of_day}.\n\n"
                     "RULES:\n"
                     "- Start with a short punchy quote (original or from a known figure, with attribution)\n"
                     "- Follow with 2-3 sentences of personal encouragement specific to a student building AI projects and grinding toward their goals\n"
@@ -150,7 +148,7 @@ def send_motivation_quote():
             },
             {
                 "role": "user",
-                "content": "Send me my " + time_of_day + " motivation."
+                "content": f"Send me my {time_of_day} motivation."
             }
         ]
     )
@@ -205,6 +203,50 @@ def send_nightly_research():
     print("Nightly research summary sent!")
 
 
+def send_daily_concept():
+    print("Sending daily AI/ML concept...")
+
+    topics = [
+        "machine learning", "deep learning", "natural language processing",
+        "computer vision", "reinforcement learning", "AI agents",
+        "transformer architecture", "prompt engineering", "MLOps",
+        "automation engineering", "data pipelines", "model fine-tuning",
+        "vector databases", "retrieval augmented generation", "AI safety"
+    ]
+
+    import random
+    topic = random.choice(topics)
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a technical mentor teaching Bimal, a CS student preparing for "
+                    "AI/ML engineering interviews and internships.\n\n"
+                    "Explain one core concept from the given topic in this exact format:\n\n"
+                    "**Concept:** [name of the concept]\n\n"
+                    "**What it is:** 2 sentences, plain English, no jargon\n\n"
+                    "**How it works:** 3-4 sentences explaining the mechanics simply\n\n"
+                    "**Real world example:** 1-2 sentences of a concrete use case\n\n"
+                    "**Interview tip:** One sentence on how this commonly appears in interviews\n\n"
+                    "Keep the total under 150 words. Be clear and practical."
+                )
+            },
+            {
+                "role": "user",
+                "content": f"Teach me an important concept from: {topic}"
+            }
+        ]
+    )
+
+    concept = response.choices[0].message.content
+    message = f"🧠 **Tonight's AI/ML Concept**\n\n{concept}\n\n---\nStudy well, Bimal! — Pulse"
+    send_discord(message)
+    print("Daily concept sent!")
+
+
 def start_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_job(
@@ -217,15 +259,21 @@ def start_scheduler():
     )
     scheduler.add_job(
         send_motivation_quote,
-        CronTrigger(hour=8, minute=30, timezone="America/New_York")
+        CronTrigger(hour=8, minute=30, timezone="America/New_York"),
+        kwargs={"time_of_day": "morning"}
     )
     scheduler.add_job(
         send_motivation_quote,
-        CronTrigger(hour=21, minute=0, timezone="America/New_York")
+        CronTrigger(hour=21, minute=0, timezone="America/New_York"),
+        kwargs={"time_of_day": "evening"}
     )
     scheduler.add_job(
         send_nightly_research,
         CronTrigger(hour=21, minute=30, timezone="America/New_York")
+    )
+    scheduler.add_job(
+        send_daily_concept,
+        CronTrigger(hour=1, minute=0, timezone="America/New_York")
     )
     scheduler.start()
     print("Scheduler started.")
