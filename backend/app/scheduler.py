@@ -1,7 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
-from app.tools import get_news, send_email, get_jobs, send_discord
+from app.tools import get_news, send_email, get_jobs, send_discord, get_arxiv_papers
 from app.database import get_connection
 from openai import OpenAI
 from app.config import OPENAI_API_KEY
@@ -124,6 +124,87 @@ def send_job_matches():
     print("Job matches sent to Discord!")
 
 
+def send_motivation_quote():
+    print("Sending motivation quote...")
+
+    time_of_day = "morning" if datetime.now().hour < 12 else "evening"
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a personal motivational coach for Bimal, a hardworking CS student "
+                    "at St. Joseph's University New York who is building AI projects, learning every day, "
+                    "and working toward a career in AI/ML engineering.\n\n"
+                    "Generate one powerful, genuine motivational message for his " + time_of_day + ".\n\n"
+                    "RULES:\n"
+                    "- Start with a short punchy quote (original or from a known figure, with attribution)\n"
+                    "- Follow with 2-3 sentences of personal encouragement specific to a student building AI projects and grinding toward their goals\n"
+                    "- Keep the tone warm, real, and energizing — not generic or preachy\n"
+                    "- End with one short action-oriented line for the day\n"
+                    "- Total length: under 100 words\n"
+                    "OUTPUT: Just the message. No preamble."
+                )
+            },
+            {
+                "role": "user",
+                "content": "Send me my " + time_of_day + " motivation."
+            }
+        ]
+    )
+
+    quote = response.choices[0].message.content
+    emoji = "🌅" if time_of_day == "morning" else "🌙"
+    message = f"{emoji} **{time_of_day.capitalize()} Motivation for Bimal**\n\n{quote}\n\n— Pulse"
+    send_discord(message)
+    print(f"Motivation quote sent ({time_of_day})!")
+
+
+def send_nightly_research():
+    print("Sending nightly research summary...")
+
+    topics = ["large language models", "AI agents", "machine learning", "deep learning"]
+    import random
+    topic = random.choice(topics)
+
+    raw_papers = get_arxiv_papers(topic)
+
+    if "No papers found" in raw_papers or "Error" in raw_papers:
+        print("No papers found, skipping.")
+        return
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a research assistant summarizing the latest AI papers for Bimal, "
+                    "a CS student interested in AI/ML engineering.\n\n"
+                    "Given a list of recent Arxiv papers, pick the single most interesting one "
+                    "and write a summary in this format:\n\n"
+                    "**Paper:** [title]\n"
+                    "**Why it matters:** 2 sentences explaining the significance\n"
+                    "**Key idea:** 2 sentences on what the paper actually does\n"
+                    "**Takeaway:** One sentence on what to learn from this\n\n"
+                    "Keep it sharp, clear, and under 120 words. No jargon overload."
+                )
+            },
+            {
+                "role": "user",
+                "content": f"Here are today's papers on {topic}:\n\n{raw_papers}"
+            }
+        ]
+    )
+
+    summary = response.choices[0].message.content
+    message = f"📚 **Tonight's Research Pick — {topic.title()}**\n\n{summary}\n\n— Pulse"
+    send_discord(message)
+    print("Nightly research summary sent!")
+
+
 def start_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_job(
@@ -133,6 +214,18 @@ def start_scheduler():
     scheduler.add_job(
         send_job_matches,
         IntervalTrigger(hours=1)
+    )
+    scheduler.add_job(
+        send_motivation_quote,
+        CronTrigger(hour=8, minute=30, timezone="America/New_York")
+    )
+    scheduler.add_job(
+        send_motivation_quote,
+        CronTrigger(hour=21, minute=0, timezone="America/New_York")
+    )
+    scheduler.add_job(
+        send_nightly_research,
+        CronTrigger(hour=21, minute=30, timezone="America/New_York")
     )
     scheduler.start()
     print("Scheduler started.")
