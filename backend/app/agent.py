@@ -1,7 +1,7 @@
 import json
 from openai import OpenAI
 from app.config import OPENAI_API_KEY, MODEL_NAME
-from app.tools import search_web, get_news, get_wikipedia_summary,send_email,get_github_trending, get_arxiv_papers,send_discord,get_jobs, generate_cover_letter
+from app.tools import search_web, get_news, get_wikipedia_summary, send_email, get_github_trending, get_arxiv_papers, send_discord, get_jobs, generate_cover_letter, get_greenhouse_jobs
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -22,6 +22,7 @@ SYSTEM_PROMPT = """You are Pulse, a smart personal AI assistant and automation a
 - Use `send_discord` to post a message or summary to Bimal's Discord channel
 - Use `get_jobs` for finding AI, ML, automation engineering jobs and internships
 - Use `generate_cover_letter` when Bimal provides a job description and wants a cover letter PDF sent to his email
+- Use `get_greenhouse_jobs` when Bimal asks about open roles at a specific company (e.g. "jobs at Anthropic", "what is Stripe hiring for")
 - Always use the most relevant tool — never guess when a tool can give a better answer
 - Chain tools when needed — e.g. fetch news then send via email or Discord
 
@@ -189,6 +190,27 @@ tools = [
             "required": ["job_description"]
         }
     }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "get_greenhouse_jobs",
+        "description": "Search open job listings by role across top tech companies on Greenhouse, or filter by a specific company.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "description": "Job role or keyword to search for e.g. 'machine learning engineer', 'data scientist', 'intern'"
+                },
+                "company": {
+                    "type": "string",
+                    "description": "Optional specific company slug e.g. anthropic, stripe, figma. Leave empty to search all companies."
+                }
+            },
+            "required": []
+        }
+    }
 }
 ]
 
@@ -253,6 +275,11 @@ def run_agent(messages: list):
                     result = get_jobs(args.get("keywords", "AI ML engineer intern automation"))
                 elif tool_name=="generate_cover_letter":
                     result=generate_cover_letter(args["job_description"])
+                elif tool_name=="get_greenhouse_jobs":
+                    result=get_greenhouse_jobs(
+                        role=args.get("role", ""),
+                        company=args.get("company", "")
+                    )
                 else:
                     result = f"Unknown tool: {tool_name}"
 

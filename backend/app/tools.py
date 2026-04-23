@@ -206,6 +206,58 @@ def get_jobs(keywords: str = "python developer") -> str:
     except Exception as e:
         return f"Error fetching jobs: {str(e)}"
 
+def get_greenhouse_jobs(role: str = "", company: str = "") -> str:
+    companies = [
+        "anthropic", "stripe", "figma", "notion", "airbnb", "reddit",
+        "robinhood", "brex", "scale", "huggingface", "cohere", "mistral",
+        "openai", "perplexity", "anyscale", "together", "modal", "replit",
+        "vercel", "linear", "retool", "airtable", "asana", "zapier",
+        "databricks", "snowflake", "confluent", "dbt", "weights-biases"
+    ]
+
+    if company:
+        companies = [company.lower().replace(" ", "")]
+
+    results = []
+    searched = 0
+
+    for slug in companies:
+        try:
+            url = f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
+            response = requests.get(url, timeout=5)
+            if response.status_code != 200:
+                continue
+            jobs = response.json().get("jobs", [])
+            searched += 1
+
+            for job in jobs:
+                title = job.get("title", "")
+                if role and role.lower() not in title.lower():
+                    continue
+                location = job.get("location", {}).get("name", "Not specified")
+                link = job.get("absolute_url", "")
+                departments = ", ".join([d["name"] for d in job.get("departments", [])])
+                results.append(
+                    f"Company: {slug.capitalize()}\n"
+                    f"Title: {title}\n"
+                    f"Department: {departments}\n"
+                    f"Location: {location}\n"
+                    f"Apply: {link}\n"
+                )
+                if len(results) >= 10:
+                    break
+        except Exception:
+            continue
+
+        if len(results) >= 10:
+            break
+
+    if not results:
+        return f"No Greenhouse listings found for '{role}'." if role else "No open roles found."
+
+    header = f"Found {len(results)} role(s) matching '{role}' across Greenhouse companies:\n\n" if role else f"Open roles across top companies:\n\n"
+    return header + "\n".join(results)
+
 def generate_cover_letter(job_description: str) -> str:
     resume_path = os.path.join(os.path.dirname(__file__), "resume.txt")
     resume = open(resume_path).read()
