@@ -86,13 +86,21 @@ def send_job_matches():
         print("No jobs found, skipping.")
         return
 
-    job_id = hashlib.md5(raw_jobs.encode()).hexdigest()
+    # Hash each individual job line so we detect any single new job
+    lines = [l.strip() for l in raw_jobs.split("\n") if l.strip().startswith("Title:")]
+    new_jobs = []
+    for line in lines:
+        job_id = hashlib.md5(line.encode()).hexdigest()
+        if not is_job_seen(job_id):
+            new_jobs.append(job_id)
 
-    if is_job_seen(job_id):
+    if not new_jobs:
         print("No new jobs since last check, skipping.")
         return
 
-    mark_job_seen(job_id)
+    print(f"Found {len(new_jobs)} new job(s), sending to Discord...")
+    for job_id in new_jobs:
+        mark_job_seen(job_id)
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
