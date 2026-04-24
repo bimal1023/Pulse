@@ -1,32 +1,25 @@
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8002";
-
-function linkifyText(text) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const parts = text.split(urlRegex);
-  return parts.map((part, index) => {
-    if (!/^https?:\/\//.test(part)) return part;
-    const clean = part.replace(/[).,!?]+$/, "");
-    const trailing = part.slice(clean.length);
-    return (
-      <span key={index}>
-        <a href={clean} target="_blank" rel="noreferrer" className="inline-link">
-          {clean}
-        </a>
-        {trailing}
-      </span>
-    );
-  });
-}
 
 function FormattedText({ text }) {
   if (!text) return null;
   return (
-    <div className="formatted-text">
-      {text.split("\n").map((line, i) => (
-        <div key={i}>{linkifyText(line) || "\u00A0"}</div>
-      ))}
+    <div className="md">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noreferrer" className="inline-link">
+              {children}
+            </a>
+          ),
+        }}
+      >
+        {text}
+      </ReactMarkdown>
     </div>
   );
 }
@@ -79,6 +72,13 @@ export default function App() {
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [listening, setListening] = useState(false);
+  const [unlocked, setUnlocked] = useState(
+    () => sessionStorage.getItem("pulse_auth") === "true"
+  );
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
   const bottomRef = useRef(null);
   const recognitionRef = useRef(null);
   const inputRef = useRef(null);
@@ -197,6 +197,43 @@ export default function App() {
     setListening(true);
   };
 
+  const handleSendOtp = async () => {
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const res = await fetch(`${API_BASE}/send-otp`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to send code");
+      setOtpSent(true);
+    } catch (err) {
+      setOtpError("Failed to send code. Try again.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) return;
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const res = await fetch(`${API_BASE}/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Incorrect code");
+      }
+      sessionStorage.setItem("pulse_auth", "true");
+      setUnlocked(true);
+    } catch (err) {
+      setOtpError(err.message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const getGreeting = () => {
     const h = new Date().getHours();
     if (h < 12) return "Good morning";
@@ -205,6 +242,75 @@ export default function App() {
   };
 
   const isEmpty = messages.length === 0 && !loading;
+
+  if (!unlocked) return (
+    <div className="lock-screen">
+      <div className="lock-box">
+
+        {/* Logo */}
+        <div className="lock-logo">
+          <div className="lock-avatar">
+            <span className="lock-avatar-dot" />
+          </div>
+          <span className="lock-logo-text">Pulse</span>
+        </div>
+
+        {/* Notice */}
+        <div className="lock-notice">
+          <span className="lock-notice-icon">🔒</span>
+          <div>
+            <p className="lock-notice-title">Private Access Only</p>
+            <p className="lock-notice-sub">This assistant is built exclusively for <strong>Bimal</strong>. Unauthorized access is not permitted.</p>
+          </div>
+        </div>
+
+        <div className="lock-divider" />
+
+        {!otpSent ? (
+          <>
+            <p className="lock-sub">Send a one-time verification code to Bimal's email address.</p>
+            <button className="lock-btn" onClick={handleSendOtp} disabled={otpLoading}>
+              {otpLoading ? (
+                <span className="lock-loading">Sending<span>.</span><span>.</span><span>.</span></span>
+              ) : "Send Verification Code"}
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="lock-sub">Enter the 6-digit code sent to your email.</p>
+            <div className="lock-input-wrap">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="_ _ _ _ _ _"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
+                className="lock-input"
+                autoFocus
+              />
+            </div>
+            <button className="lock-btn" onClick={handleVerifyOtp} disabled={otpLoading || otp.length < 6}>
+              {otpLoading ? (
+                <span className="lock-loading">Verifying<span>.</span><span>.</span><span>.</span></span>
+              ) : "Verify & Enter"}
+            </button>
+            <button className="lock-resend" onClick={() => { setOtpSent(false); setOtp(""); setOtpError(""); }}>
+              ← Send a new code
+            </button>
+          </>
+        )}
+
+        {otpError && (
+          <div className="lock-error">
+            <span>⚠️</span> {otpError}
+          </div>
+        )}
+
+        <p className="lock-footer">Pulse · Personal AI Agent</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="shell">
@@ -358,6 +464,7 @@ export default function App() {
       </main>
 
       <style>{`
+
         .shell {
           display: flex;
           height: 100svh;
@@ -736,7 +843,7 @@ export default function App() {
 
         .bubble.user {
           background: var(--accent);
-          color: white;
+          color: #ffffff;
           padding: 10px 16px;
           border-radius: 18px;
           border-bottom-right-radius: 4px;
@@ -748,12 +855,93 @@ export default function App() {
           padding: 4px 0;
         }
 
-        .formatted-text { white-space: pre-wrap; }
-
         .inline-link {
           color: var(--accent);
           text-decoration: underline;
           text-underline-offset: 2px;
+        }
+
+        /* ── Markdown ── */
+        .md { font-size: 15px; line-height: 1.75; color: var(--text-h); }
+        .bubble.user .md, .bubble.user .md * { color: #ffffff; }
+        .md p { margin: 0 0 10px; }
+        .md p:last-child { margin-bottom: 0; }
+        .md h1, .md h2, .md h3 {
+          color: var(--text-h);
+          font-weight: 700;
+          letter-spacing: -0.01em;
+          margin: 16px 0 6px;
+          line-height: 1.3;
+        }
+        .md h1 { font-size: 18px; }
+        .md h2 { font-size: 16px; }
+        .md h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text); }
+        .md ul, .md ol {
+          padding-left: 20px;
+          margin: 6px 0 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .md li { line-height: 1.65; }
+        .md li::marker { color: var(--accent); }
+        .md strong { font-weight: 600; color: var(--text-h); }
+        .md em { font-style: italic; }
+        .md code {
+          background: var(--code-bg);
+          border: 1px solid var(--border);
+          border-radius: 5px;
+          padding: 1px 6px;
+          font-size: 13px;
+          font-family: var(--mono);
+          color: var(--accent);
+        }
+        .md pre {
+          background: var(--code-bg);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          padding: 14px 16px;
+          overflow-x: auto;
+          margin: 10px 0;
+        }
+        .md pre code {
+          background: none;
+          border: none;
+          padding: 0;
+          color: var(--text-h);
+          font-size: 13px;
+        }
+        .md blockquote {
+          border-left: 3px solid var(--accent-border);
+          padding-left: 14px;
+          margin: 10px 0;
+          color: var(--text);
+          font-style: italic;
+        }
+        .md table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 10px 0;
+          font-size: 14px;
+        }
+        .md th {
+          background: var(--code-bg);
+          padding: 8px 12px;
+          text-align: left;
+          font-weight: 600;
+          color: var(--text-h);
+          border: 1px solid var(--border);
+        }
+        .md td {
+          padding: 8px 12px;
+          border: 1px solid var(--border);
+          color: var(--text-h);
+        }
+        .md tr:nth-child(even) td { background: var(--code-bg); }
+        .md hr {
+          border: none;
+          border-top: 1px solid var(--border);
+          margin: 14px 0;
         }
 
         /* ── Tool status ── */
