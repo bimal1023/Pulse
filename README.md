@@ -2,7 +2,7 @@
 
 A personal AI assistant and automation agent built for real-world use — searches the web, reads the news, finds jobs, generates cover letters, monitors GitHub trends, fetches research papers, and delivers automated daily briefings via email and Discord.
 
-**Live:** [pulse-frontend.vercel.app](https://pulse-frontend.vercel.app) · **Backend:** Render · **Frontend:** Vercel
+**Live:** [pulse-rust-eta.vercel.app](https://pulse-rust-eta.vercel.app) · **Backend:** Render · **Frontend:** Vercel
 
 Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **APScheduler** · **SQLite** · **Gmail SMTP** · **Discord Webhooks**
 
