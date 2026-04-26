@@ -16,11 +16,19 @@ import random
 import time
 import smtplib
 import os
+import secrets
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from fastapi import Depends
 
-# OTP store
+# OTP + auth token store
 otp_store = {}
+active_token = {"token": None}
+
+def verify_token(request: Request):
+    token = request.headers.get("X-Auth-Token")
+    if not token or token != active_token["token"]:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -53,7 +61,7 @@ MAX_HISTORY = 20
 
 @app.post("/run-agent")
 @limiter.limit("5/minute")
-def run(request: Request, body: AgentRequest):
+def run(request: Request, body: AgentRequest, _=Depends(verify_token)):
     messages = [m.dict() for m in body.messages][-MAX_HISTORY:]
     task = messages[-1]["content"]
 
@@ -73,18 +81,19 @@ def run(request: Request, body: AgentRequest):
     return StreamingResponse(generate(), media_type="text/event-stream")
 
 @app.get("/history")
-def get_history():
+def get_history(_=Depends(verify_token)):
     return load_task_history()
 
 @app.get("/history/{task_id}")
-def get_history_by_id(task_id: int):
+def get_history_by_id(task_id: int, _=Depends(verify_token)):
     task = load_task_by_id(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
 @app.post("/send-otp")
-def send_otp():
+@limiter.limit("5/hour")
+def send_otp(request: Request):
     otp = str(random.randint(100000, 999999))
     otp_store["code"] = otp
     otp_store["expires_at"] = time.time() + 300  # 5 minutes
@@ -135,27 +144,27 @@ def send_otp():
 
 # ── Manual test triggers (for debugging scheduled jobs) ──
 @app.post("/test/jobs")
-def test_jobs():
+def test_jobs(_=Depends(verify_token)):
     result = send_job_matches(force=True)
     return {"message": f"Job matching ran — result: {result}"}
 
 @app.post("/test/research")
-def test_research():
+def test_research(_=Depends(verify_token)):
     send_nightly_research()
     return {"message": "Research summary triggered — check Discord"}
 
 @app.post("/test/concept")
-def test_concept():
+def test_concept(_=Depends(verify_token)):
     send_daily_concept()
     return {"message": "AI/ML concept triggered — check Discord"}
 
 @app.post("/test/motivation")
-def test_motivation(time_of_day: str = "morning"):
+def test_motivation(time_of_day: str = "morning", _=Depends(verify_token)):
     send_motivation_quote(time_of_day)
     return {"message": f"Motivation ({time_of_day}) triggered — check Discord"}
 
 @app.post("/test/briefing")
-def test_briefing():
+def test_briefing(_=Depends(verify_token)):
     send_daily_briefing()
     return {"message": "Daily briefing triggered — check email"}
 
@@ -164,7 +173,8 @@ class OTPVerify(BaseModel):
     otp: str
 
 @app.post("/verify-otp")
-def verify_otp(body: OTPVerify):
+@limiter.limit("10/minute")
+def verify_otp(request: Request, body: OTPVerify):
     entered = body.otp.strip()
     stored = otp_store.get("code")
     expires_at = otp_store.get("expires_at", 0)
@@ -178,4 +188,6 @@ def verify_otp(body: OTPVerify):
         raise HTTPException(status_code=401, detail="Incorrect code. Try again.")
 
     otp_store.clear()
-    return {"message": "Verified", "token": "pulse_authenticated"}
+    token = secrets.token_hex(32)
+    active_token["token"] = token
+    return {"message": "Verified", "token": token}

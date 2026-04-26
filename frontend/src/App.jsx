@@ -73,7 +73,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [unlocked, setUnlocked] = useState(
-    () => sessionStorage.getItem("pulse_auth") === "true"
+    () => !!sessionStorage.getItem("pulse_token")
   );
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -83,9 +83,14 @@ export default function App() {
   const recognitionRef = useRef(null);
   const inputRef = useRef(null);
 
+  const authHeaders = () => ({
+    "Content-Type": "application/json",
+    "X-Auth-Token": sessionStorage.getItem("pulse_token") ?? "",
+  });
+
   const fetchHistory = async () => {
     try {
-      const res = await fetch(`${API_BASE}/history`);
+      const res = await fetch(`${API_BASE}/history`, { headers: authHeaders() });
       setHistory(await res.json());
     } catch (err) {
       console.error(err);
@@ -112,7 +117,7 @@ export default function App() {
     try {
       const res = await fetch(`${API_BASE}/run-agent`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({ messages: updatedMessages }),
       });
       if (!res.ok) throw new Error("Failed to run agent");
@@ -153,7 +158,7 @@ export default function App() {
 
   const loadHistoryItem = async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/history/${id}`);
+      const res = await fetch(`${API_BASE}/history/${id}`, { headers: authHeaders() });
       const data = await res.json();
       const item = data.result ?? data;
       setMessages([
@@ -221,11 +226,11 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ otp }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.detail || "Incorrect code");
       }
-      sessionStorage.setItem("pulse_auth", "true");
+      sessionStorage.setItem("pulse_token", data.token);
       setUnlocked(true);
     } catch (err) {
       setOtpError(err.message);
