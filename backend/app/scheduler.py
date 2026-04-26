@@ -1,6 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
 from app.tools import get_news, send_email, get_jobs, send_discord, get_arxiv_papers
 from app.database import get_connection
 from openai import OpenAI
@@ -285,7 +284,11 @@ def start_scheduler():
     )
     scheduler.add_job(
         send_job_matches,
-        IntervalTrigger(hours=1)
+        CronTrigger(hour=14, minute=0, timezone="America/New_York")
+    )
+    scheduler.add_job(
+        send_job_matches,
+        CronTrigger(hour=0, minute=30, timezone="America/New_York")
     )
     scheduler.add_job(
         send_motivation_quote,
