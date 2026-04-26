@@ -1,12 +1,9 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from app.tools import get_news, send_email, get_jobs, send_discord, get_arxiv_papers
-from app.database import get_connection
 from openai import OpenAI
 from app.config import OPENAI_API_KEY
-from datetime import datetime, timezone
 import os
-import hashlib
 import random
 
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -58,25 +55,6 @@ Sent automatically by Pulse
         print(f"ERROR in send_daily_briefing: {e}")
 
 
-def is_job_seen(job_id: str) -> bool:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM seen_jobs WHERE job_id = ?", (job_id,))
-    result = cursor.fetchone()
-    conn.close()
-    return result is not None
-
-
-def mark_job_seen(job_id: str):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT OR IGNORE INTO seen_jobs (job_id, seen_at) VALUES (?, ?)",
-        (job_id, datetime.now(timezone.utc).isoformat())
-    )
-    conn.commit()
-    conn.close()
-
 
 def send_job_matches(force: bool = False):
     print("Fetching and scoring jobs...")
@@ -88,28 +66,8 @@ def send_job_matches(force: bool = False):
             print(f"No jobs returned from Adzuna: {raw_jobs}")
             return "no_jobs"
 
-        # Hash each individual job line so we detect any single new job
         lines = [l.strip() for l in raw_jobs.split("\n") if l.strip().startswith("Title:")]
-        print(f"Found {len(lines)} total job(s) from Adzuna.")
-
-        if force:
-            # Bypass deduplication — send everything
-            new_jobs = [hashlib.md5(line.encode()).hexdigest() for line in lines]
-            print("Force mode: skipping deduplication.")
-        else:
-            new_jobs = []
-            for line in lines:
-                job_id = hashlib.md5(line.encode()).hexdigest()
-                if not is_job_seen(job_id):
-                    new_jobs.append(job_id)
-
-        if not new_jobs:
-            print("No new jobs since last check, skipping.")
-            return "all_seen"
-
-        print(f"Sending {len(new_jobs)} new job(s) to Discord...")
-        for job_id in new_jobs:
-            mark_job_seen(job_id)
+        print(f"Found {len(lines)} job(s) from Adzuna, sending all to Discord...")
 
         response = client.chat.completions.create(
             model="gpt-4.1-mini",
@@ -284,7 +242,7 @@ def start_scheduler():
     )
     scheduler.add_job(
         send_job_matches,
-        CronTrigger(hour=14, minute=0, timezone="America/New_York")
+        CronTrigger(hour=14, minute=30, timezone="America/New_York")
     )
     scheduler.add_job(
         send_job_matches,
