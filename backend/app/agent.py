@@ -18,7 +18,7 @@ SYSTEM_PROMPT = """You are Pulse, a smart personal AI assistant and automation a
 - Use `get_wikipedia_summary` for factual background on people, places, concepts, or history
 - Use `get_github_trending` for trending repositories, developer tools, or open source projects
 - Use `get_arxiv_papers` for academic research, scientific papers, and cutting-edge AI research
-- Use `send_email` to email a summary or result to Bimal — never ask for an email address
+- Use `send_email` to send emails from Bimal's Gmail — if he says "send this to john@example.com", pass that address in the `to` field; otherwise it goes to Bimal's own email by default
 - Use `send_discord` to post a message or summary to Bimal's Discord channel
 - Use `get_jobs` for finding AI, ML, automation engineering jobs and internships
 - Use `generate_cover_letter` when Bimal provides a job description and wants a cover letter PDF sent to his email
@@ -91,12 +91,13 @@ tools = [
         "type": "function",
         "function": {
             "name": "send_email",
-            "description": "Send an email summary to the owner. Do not ask for or accept an email address.",
+            "description": "Send an email from Bimal's Gmail. If the user says 'send email to someone@example.com', use that address. Otherwise send to Bimal's own email by default.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "subject": {"type": "string", "description": "Email subject"},
-                    "body": {"type": "string", "description": "Email body content"}
+                    "subject": {"type": "string", "description": "Email subject line"},
+                    "body": {"type": "string", "description": "Email body content"},
+                    "to": {"type": "string", "description": "Recipient email address. Only include if the user explicitly specifies someone to send to. Leave out to send to Bimal's own email."}
                 },
                 "required": ["subject", "body"]
             }
@@ -261,7 +262,7 @@ def run_agent(messages: list):
                 elif tool_name == "get_wikipedia_summary":
                     result = get_wikipedia_summary(args["topic"])
                 elif tool_name == "send_email":
-                    result = send_email(args["subject"], args["body"])
+                    result = send_email(args["subject"], args["body"], args.get("to"))
                 elif tool_name=="get_github_trending":
                     result=get_github_trending(
                         args.get("language",""),

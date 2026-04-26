@@ -66,22 +66,22 @@ def get_wikipedia_summary(topic:str) -> str:
         return data.get("extract","No summary found.")
     except Exception as e:
         return f"Error fetching Wikipedia:{str(e)}"
-def send_email(subject:str,body:str)-> str:
-    sender=os.getenv("EMAIL_SENDER")
-    password=os.getenv("EMAIL_PASSWORD")
-    to=os.getenv("EMAIL_RECEIVER")
-    msg=MIMEMultipart()
-    msg["From"]=sender
-    msg["To"]=to
-    msg["Subject"]=subject
-    msg.attach(MIMEText(body,"plain"))
+def send_email(subject: str, body: str, to: str = None) -> str:
+    sender = os.getenv("EMAIL_SENDER")
+    password = os.getenv("EMAIL_PASSWORD")
+    recipient = to if to else os.getenv("EMAIL_RECEIVER")
+    msg = MIMEMultipart()
+    msg["From"] = sender
+    msg["To"] = recipient
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com",465)as server:
-            server.login(sender,password)
-            server.sendmail(sender,to,msg.as_string())
-        return f"Email sent successfully to{to}"
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, password)
+            server.sendmail(sender, recipient, msg.as_string())
+        return f"Email sent successfully to {recipient}"
     except Exception as e:
-        return f"Failed to send email:{str(e)}"
+        return f"Failed to send email: {str(e)}"
 def get_github_trending(language: str = "", since: str = "daily") -> str:
     url = "https://api.github.com/search/repositories"
     params = {
