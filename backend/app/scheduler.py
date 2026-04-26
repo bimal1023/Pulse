@@ -79,29 +79,36 @@ def mark_job_seen(job_id: str):
     conn.close()
 
 
-def send_job_matches():
+def send_job_matches(force: bool = False):
     print("Fetching and scoring jobs...")
     try:
         resume = open(os.path.join(os.path.dirname(__file__), "resume.txt")).read()
         raw_jobs = get_jobs("machine learning AI engineer intern")
 
-        if raw_jobs == "No jobs found.":
-            print("No jobs found, skipping.")
-            return
+        if not raw_jobs or "No jobs found" in raw_jobs or "Error" in raw_jobs:
+            print(f"No jobs returned from Adzuna: {raw_jobs}")
+            return "no_jobs"
 
         # Hash each individual job line so we detect any single new job
         lines = [l.strip() for l in raw_jobs.split("\n") if l.strip().startswith("Title:")]
-        new_jobs = []
-        for line in lines:
-            job_id = hashlib.md5(line.encode()).hexdigest()
-            if not is_job_seen(job_id):
-                new_jobs.append(job_id)
+        print(f"Found {len(lines)} total job(s) from Adzuna.")
+
+        if force:
+            # Bypass deduplication — send everything
+            new_jobs = [hashlib.md5(line.encode()).hexdigest() for line in lines]
+            print("Force mode: skipping deduplication.")
+        else:
+            new_jobs = []
+            for line in lines:
+                job_id = hashlib.md5(line.encode()).hexdigest()
+                if not is_job_seen(job_id):
+                    new_jobs.append(job_id)
 
         if not new_jobs:
             print("No new jobs since last check, skipping.")
-            return
+            return "all_seen"
 
-        print(f"Found {len(new_jobs)} new job(s), sending to Discord...")
+        print(f"Sending {len(new_jobs)} new job(s) to Discord...")
         for job_id in new_jobs:
             mark_job_seen(job_id)
 
@@ -133,9 +140,11 @@ def send_job_matches():
         message = f"🎯 **New Job Matches Found!**\n\n{scored}\n\n---\nSent by Pulse"
         send_discord(message)
         print("Job matches sent to Discord!")
+        return "sent"
 
     except Exception as e:
         print(f"ERROR in send_job_matches: {e}")
+        return f"error: {e}"
 
 
 def send_motivation_quote(time_of_day: str = "morning"):

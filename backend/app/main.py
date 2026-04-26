@@ -136,8 +136,8 @@ def send_otp():
 # ── Manual test triggers (for debugging scheduled jobs) ──
 @app.post("/test/jobs")
 def test_jobs():
-    send_job_matches()
-    return {"message": "Job matching triggered — check Discord"}
+    result = send_job_matches(force=True)
+    return {"message": f"Job matching ran — result: {result}"}
 
 @app.post("/test/research")
 def test_research():
