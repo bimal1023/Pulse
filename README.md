@@ -1,28 +1,31 @@
 # Pulse
 
-A personal AI assistant and automation agent that searches the web, reads the latest news, fetches research papers, monitors GitHub trends, finds job matches, and takes real actions like sending emails and Discord messages — all in a clean, streaming chat interface.
+A personal AI assistant and automation agent built for real-world use — searches the web, reads the news, finds jobs, generates cover letters, monitors GitHub trends, fetches research papers, and delivers automated daily briefings via email and Discord.
 
-Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavily** · **GNews** · **Adzuna** · **APScheduler**
+**Live:** [pulse-frontend.vercel.app](https://pulse-frontend.vercel.app) · **Backend:** Render · **Frontend:** Vercel
+
+Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **APScheduler** · **SQLite** · **Gmail SMTP** · **Discord Webhooks**
 
 ---
 
 ## Features
 
-- **Multi-tool agent** — automatically decides which tool to use based on your question
-- **Streaming responses** — tokens stream in real time as the model thinks
-- **Live tool indicators** — shows which tool is running before the answer appears
-- **Conversation history** — past sessions are saved to SQLite and accessible from the sidebar
-- **Daily AI briefing** — automatically emails a polished AI news summary every morning
-- **Email automation** — agent can send summaries and results to your inbox
-- **Discord integration** — agent can post messages to your Discord channel
-- **GitHub trending** — fetch trending repositories by language
-- **Arxiv research** — fetch latest academic papers on any topic
-- **Job matching** — hourly AI-scored job search via Adzuna, only notifies on new listings
-- **Seen jobs tracker** — SQLite-backed deduplication so you never get duplicate job alerts
-- **Resume-aware scoring** — GPT scores each job against your resume and picks top 5 matches
-- **Mobile responsive** — works on phone and desktop
+- **Autonomous tool-calling agent** — decides which tool to use, chains multiple tools together, and streams the final answer in real time
+- **Real-time token streaming** — SSE-based streaming replicates ChatGPT-style response delivery
+- **Voice input** — speak your query via Web Speech API, text fills automatically
+- **Markdown rendering** — responses render with proper headings, lists, bold, tables, and code blocks
+- **Conversation history** — all sessions saved to SQLite and accessible from the sidebar
+- **Email OTP authentication** — 6-digit code sent to owner's email, 5-minute expiry, restricts access to authorized user only
+- **Daily AI briefing** — polished AI news summary emailed every morning at 8am ET
+- **Motivation quotes** — personalized motivational messages sent to Discord at 8:30am and 9pm ET
+- **Nightly research summary** — one highlighted Arxiv paper summarized and sent to Discord at 9:30pm ET
+- **AI/ML concept of the night** — one technical concept explained and sent to Discord at 1am ET
+- **Hourly job matching** — AI/ML jobs fetched, GPT-scored against resume, sent to Discord — with deduplication
+- **Cover letter generator** — paste a job description, get a formatted PDF cover letter emailed as attachment
+- **Greenhouse job search** — search open roles by title across 30+ top tech companies
+- **Mobile responsive** — hamburger sidebar, 2-column card grid, optimized for all screen sizes
 - **Rate limiting** — 5 requests/minute per IP via SlowAPI
-- **Input validation** — message roles, lengths, and content validated via Pydantic
+- **Input validation** — roles, lengths, and content validated via Pydantic
 
 ---
 
@@ -30,14 +33,29 @@ Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavil
 
 | Tool | Description |
 |------|-------------|
-| `search_web` | Search the web via Tavily |
-| `get_news` | Fetch latest news articles via GNews |
+| `search_web` | Search the web via Tavily API |
+| `get_news` | Fetch latest news articles via GNews API |
 | `get_wikipedia_summary` | Get factual summaries from Wikipedia |
 | `get_github_trending` | Get trending GitHub repos by language |
 | `get_arxiv_papers` | Fetch latest research papers from Arxiv |
 | `send_email` | Send a summary email to the owner |
 | `send_discord` | Post a message to the owner's Discord channel |
-| `get_jobs` | Search AI/ML job listings and internships via Adzuna |
+| `get_jobs` | Search AI/ML job listings via Adzuna API |
+| `generate_cover_letter` | Generate a PDF cover letter and email it |
+| `get_greenhouse_jobs` | Search open roles across top tech companies on Greenhouse |
+
+---
+
+## Automated Pipelines
+
+| Time | What Happens |
+|------|-------------|
+| **8:00 AM ET** | AI news briefing → email |
+| **8:30 AM ET** | Morning motivation quote → Discord |
+| **Every hour** | Job matching (Adzuna, GPT-scored) → Discord |
+| **9:00 PM ET** | Evening motivation quote → Discord |
+| **9:30 PM ET** | Nightly research paper summary → Discord |
+| **1:00 AM ET** | AI/ML concept of the night → Discord |
 
 ---
 
@@ -52,13 +70,16 @@ Built with **FastAPI** · **React + Vite** · **OpenAI GPT-4.1 mini** · **Tavil
 | Knowledge | Wikipedia REST API |
 | GitHub | GitHub REST API |
 | Research | Arxiv API |
+| Job Search | Adzuna API + Greenhouse API |
+| PDF Generation | ReportLab |
 | Email | Gmail SMTP |
 | Discord | Discord Webhooks |
-| Job Search | Adzuna API |
+| Authentication | Email OTP (Gmail SMTP) |
 | Scheduler | APScheduler |
 | Database | SQLite |
-| Frontend | React 19, Vite 8 |
+| Frontend | React 19, Vite, react-markdown |
 | Rate Limiting | SlowAPI |
+| Deployment | Render (backend) + Vercel (frontend) |
 
 ---
 
@@ -69,23 +90,22 @@ pulse/
 ├── backend/
 │   ├── app/
 │   │   ├── agent.py        # Agentic loop — tool calling + streaming
-│   │   ├── config.py       # Env var loading and validation
-│   │   ├── database.py     # SQLite connection and schema init
+│   │   ├── config.py       # Env var loading
+│   │   ├── database.py     # SQLite connection and schema
 │   │   ├── history.py      # Save and load task history
-│   │   ├── main.py         # FastAPI app, routes, CORS, rate limiting
+│   │   ├── main.py         # FastAPI app, OTP endpoints, routes
 │   │   ├── schemas.py      # Pydantic request/message models
-│   │   ├── scheduler.py    # Daily briefing + hourly job matching scheduler
-│   │   ├── tools.py        # All 8 agent tools
-│   │   └── resume.txt      # Resume profile for job matching
+│   │   ├── scheduler.py    # All 6 automated scheduled pipelines
+│   │   ├── tools.py        # All 10 agent tools
+│   │   └── resume.txt      # Resume used for job matching and cover letters
 │   ├── Dockerfile
 │   ├── .env                # Secrets (not committed)
 │   └── requirements.txt
 └── frontend/
     ├── src/
-    │   ├── App.jsx         # Full chat UI — sidebar, streaming, history
-    │   ├── App.css
+    │   ├── App.jsx         # Full chat UI — streaming, voice, history, OTP lock
     │   ├── main.jsx
-    │   └── index.css
+    │   └── index.css       # CSS variables, dark mode, lock screen styles
     ├── public/
     ├── index.html
     └── package.json
@@ -99,7 +119,7 @@ pulse/
 
 - Python 3.10+
 - Node.js 18+
-- API keys for [OpenAI](https://platform.openai.com), [Tavily](https://tavily.com), and [GNews](https://gnews.io)
+- API keys for OpenAI, Tavily, GNews, and Adzuna
 
 ### 1. Clone the repo
 
@@ -123,12 +143,11 @@ Create a `.env` file in `backend/`:
 OPENAI_API_KEY=sk-...
 TAVILY_API_KEY=tvly-...
 GNEWS_API_KEY=...
-ALLOWED_ORIGINS=http://localhost:5173
 
-# Email (Gmail SMTP)
+# Email (Gmail SMTP — use App Password)
 EMAIL_SENDER=your-gmail@gmail.com
 EMAIL_PASSWORD=your-16-char-app-password
-EMAIL_RECEIVER=your-gmail@gmail.com
+EMAIL_RECEIVER=your-email@gmail.com
 
 # Discord
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
@@ -151,7 +170,7 @@ cd ../frontend
 npm install
 ```
 
-Optionally create a `.env.local` file:
+Create a `.env.local` file:
 
 ```env
 VITE_API_BASE=http://127.0.0.1:8002
@@ -167,45 +186,42 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ---
 
-## Daily AI Briefing
+## Authentication
 
-Pulse automatically sends a polished AI news summary to your email every morning at 8am ET via APScheduler.
+Pulse uses **email OTP authentication** to restrict access to the owner only.
 
-## Hourly Job Matching
-
-Every hour, Pulse fetches the latest AI/ML/Data Science job listings from Adzuna, scores them against your resume using GPT, and sends the top 5 matches to your Discord channel. A seen jobs tracker ensures you only get notified when new listings appear — no duplicates.
+1. Open the app → lock screen appears
+2. Click **Send Verification Code** → 6-digit code sent to owner's email
+3. Enter the code → access granted for the session
+4. Session expires when the browser tab is closed
 
 ---
 
 ## API Reference
 
 ### `POST /run-agent`
-
 Runs the agentic loop and streams the response as Server-Sent Events.
 
-**Request body:**
 ```json
-{
-  "messages": [
-    { "role": "user", "content": "What's happening with AI today?" }
-  ]
-}
+{ "messages": [{ "role": "user", "content": "What's happening in AI today?" }] }
 ```
 
-**SSE event types:**
-
-| Type | Payload | Description |
-|------|---------|-------------|
-| `step` | `{ "tool": "get_news" }` | A tool is being called |
-| `token` | `{ "content": "..." }` | A streamed answer token |
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `step` | `{ "tool": "get_news" }` | Tool is being called |
+| `token` | `{ "content": "..." }` | Streamed answer token |
 | `done` | `{ "steps": [...], "final_answer": "..." }` | Run complete |
 
-### `GET /history`
+### `POST /send-otp`
+Generates a 6-digit OTP and sends it to the owner's email.
 
+### `POST /verify-otp`
+Verifies the submitted OTP. Returns `{ "token": "pulse_authenticated" }` on success.
+
+### `GET /history`
 Returns all saved task history ordered newest first.
 
 ### `GET /history/{task_id}`
-
 Returns a single task by ID.
 
 ---
@@ -214,13 +230,10 @@ Returns a single task by ID.
 
 ### Backend (Render)
 
-Set the following environment variables on Render:
-
 ```env
 OPENAI_API_KEY=...
 TAVILY_API_KEY=...
 GNEWS_API_KEY=...
-ALLOWED_ORIGINS=https://your-vercel-app.vercel.app
 EMAIL_SENDER=...
 EMAIL_PASSWORD=...
 EMAIL_RECEIVER=...
@@ -229,23 +242,21 @@ ADZUNA_APP_ID=...
 ADZUNA_APP_KEY=...
 ```
 
-Render will auto-detect the `Dockerfile` in `backend/` and deploy automatically.
+Render auto-detects the `Dockerfile` in `backend/` and deploys automatically.
 
 ### Frontend (Vercel)
-
-Set the backend URL as a build-time env var:
 
 ```env
 VITE_API_BASE=https://your-render-backend.onrender.com
 ```
 
-Then deploy — Vercel auto-detects Vite and builds correctly.
+Vercel auto-detects Vite and builds correctly.
 
 ---
 
 ## Rate Limiting
 
-The `/run-agent` endpoint is limited to **5 requests per minute** per IP address. Exceeding this returns:
+The `/run-agent` endpoint is limited to **5 requests per minute** per IP:
 
 ```json
 { "detail": "Too many requests. Please wait before trying again." }
