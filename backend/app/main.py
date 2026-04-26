@@ -10,7 +10,7 @@ from app.agent import run_agent
 from app.schemas import AgentRequest
 from app.history import save_task_history, load_task_history, load_task_by_id
 from app.database import init_db
-from app.scheduler import start_scheduler
+from app.scheduler import start_scheduler, send_job_matches, send_nightly_research, send_daily_concept, send_motivation_quote, send_daily_briefing
 import json
 import random
 import time
@@ -131,6 +131,33 @@ def send_otp():
     except Exception as e:
         print(f"Email OTP error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to send OTP: {str(e)}")
+
+
+# ── Manual test triggers (for debugging scheduled jobs) ──
+@app.post("/test/jobs")
+def test_jobs():
+    send_job_matches()
+    return {"message": "Job matching triggered — check Discord"}
+
+@app.post("/test/research")
+def test_research():
+    send_nightly_research()
+    return {"message": "Research summary triggered — check Discord"}
+
+@app.post("/test/concept")
+def test_concept():
+    send_daily_concept()
+    return {"message": "AI/ML concept triggered — check Discord"}
+
+@app.post("/test/motivation")
+def test_motivation(time_of_day: str = "morning"):
+    send_motivation_quote(time_of_day)
+    return {"message": f"Motivation ({time_of_day}) triggered — check Discord"}
+
+@app.post("/test/briefing")
+def test_briefing():
+    send_daily_briefing()
+    return {"message": "Daily briefing triggered — check email"}
 
 
 class OTPVerify(BaseModel):

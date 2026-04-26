@@ -112,7 +112,7 @@ def get_github_trending(language: str = "", since: str = "daily") -> str:
     except Exception as e:
         return f"Error fetching GitHub trending: {str(e)}"
 def get_arxiv_papers(topic: str) -> str:
-    url = "https://export.arxiv.org/api/query"
+    url = "http://export.arxiv.org/api/query"
     params = {
         "search_query": f"all:{topic}",
         "start": 0,
@@ -122,7 +122,7 @@ def get_arxiv_papers(topic: str) -> str:
     }
 
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=15)
         response.raise_for_status()
         
         import xml.etree.ElementTree as ET
