@@ -8,3 +8,4 @@ pydantic
 slowapi
 apscheduler
 reportlab
+markdown

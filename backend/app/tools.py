@@ -2,6 +2,7 @@ from tavily import TavilyClient
 import os
 import requests
 import smtplib
+import markdown
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -66,15 +67,107 @@ def get_wikipedia_summary(topic:str) -> str:
         return data.get("extract","No summary found.")
     except Exception as e:
         return f"Error fetching Wikipedia:{str(e)}"
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {{
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #f4f7f6;
+    color: #333333;
+    margin: 0;
+    padding: 0;
+  }}
+  .container {{
+    max-width: 600px;
+    margin: 40px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }}
+  .header {{
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    color: #ffffff;
+    padding: 30px;
+    text-align: center;
+  }}
+  .header h1 {{
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }}
+  .content {{
+    padding: 30px;
+    line-height: 1.6;
+    font-size: 16px;
+  }}
+  .content h1, .content h2, .content h3 {{
+    color: #111827;
+    margin-top: 0;
+  }}
+  .content a {{
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 500;
+  }}
+  .content a:hover {{
+    text-decoration: underline;
+  }}
+  .footer {{
+    background-color: #f9fafb;
+    padding: 20px;
+    text-align: center;
+    font-size: 14px;
+    color: #6b7280;
+    border-top: 1px solid #e5e7eb;
+  }}
+  .footer p {{
+    margin: 0;
+  }}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Pulse AI</h1>
+    </div>
+    <div class="content">
+      {content}
+    </div>
+    <div class="footer">
+      <p>Sent by Pulse &bull; Your Smart Automation Agent</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
 def send_email(subject: str, body: str, to: str = None) -> str:
     sender = os.getenv("EMAIL_SENDER")
     password = os.getenv("EMAIL_PASSWORD")
     recipient = to if to else os.getenv("EMAIL_RECEIVER")
-    msg = MIMEMultipart()
+    
+    # We use "alternative" so that email clients can choose between plain text and HTML
+    msg = MIMEMultipart("alternative")
     msg["From"] = sender
     msg["To"] = recipient
     msg["Subject"] = subject
+    
+    # Attach plain text version
     msg.attach(MIMEText(body, "plain"))
+    
+    # Convert markdown body to HTML and attach HTML version
+    try:
+        html_content = markdown.markdown(body)
+        formatted_html = HTML_TEMPLATE.format(content=html_content)
+        msg.attach(MIMEText(formatted_html, "html"))
+    except Exception as e:
+        print(f"Warning: Failed to generate HTML email content: {e}")
+        # If HTML generation fails, the plain text version is already attached.
+        
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender, password)
