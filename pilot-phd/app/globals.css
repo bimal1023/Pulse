@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #fafafa;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prose overrides for ResultCard */
+.prose :where(h1, h2, h3, h4):not(:where([class~="not-prose"] *)) {
+  color: #111827;
+}
+.prose :where(p, li):not(:where([class~="not-prose"] *)) {
+  color: #374151;
+}
+.prose :where(code):not(:where([class~="not-prose"] *))::before,
+.prose :where(code):not(:where([class~="not-prose"] *))::after {
+  content: "";
+}
