@@ -205,7 +205,7 @@ def get_github_trending(language: str = "", since: str = "daily") -> str:
     except Exception as e:
         return f"Error fetching GitHub trending: {str(e)}"
 def get_arxiv_papers(topic: str) -> str:
-    url = "http://export.arxiv.org/api/query"
+    url = "https://export.arxiv.org/api/query"
     params = {
         "search_query": f"all:{topic}",
         "start": 0,

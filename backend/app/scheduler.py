@@ -151,7 +151,7 @@ def send_nightly_research():
 
         raw_papers = get_arxiv_papers(topic)
 
-        if "No papers found" in raw_papers or "Error" in raw_papers:
+        if raw_papers.startswith("No papers found") or raw_papers.startswith("Error fetching papers"):
             print(f"Arxiv fetch failed or no papers: {raw_papers}")
             return
 
@@ -260,7 +260,7 @@ def start_scheduler():
     )
     scheduler.add_job(
         send_nightly_research,
-        CronTrigger(hour=21, minute=30, timezone="America/New_York")
+        CronTrigger(hour=1, minute=20, timezone="America/New_York")
     )
     scheduler.add_job(
         send_daily_concept,
