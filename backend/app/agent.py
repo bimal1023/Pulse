@@ -1,7 +1,7 @@
 import json
 from openai import OpenAI
 from app.config import OPENAI_API_KEY, MODEL_NAME
-from app.tools import search_web, get_news, get_wikipedia_summary, send_email, get_github_trending, get_arxiv_papers, send_discord, get_jobs, generate_cover_letter, get_greenhouse_jobs
+from app.tools import search_web, get_news, get_wikipedia_summary, send_email, get_github_trending, get_arxiv_papers, send_discord, get_jobs, generate_cover_letter, get_greenhouse_jobs, get_youtube_transcript
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -23,6 +23,7 @@ SYSTEM_PROMPT = """You are Pulse, a smart personal AI assistant and automation a
 - Use `get_jobs` for finding AI, ML, automation engineering jobs and internships
 - Use `generate_cover_letter` when Bimal provides a job description and wants a cover letter PDF sent to his email
 - Use `get_greenhouse_jobs` when Bimal asks about open roles at a specific company (e.g. "jobs at Anthropic", "what is Stripe hiring for")
+- Use `get_youtube_transcript` when Bimal shares a YouTube link or asks you to summarize/explain a video — fetch the transcript, then summarize it in your own words
 - Always use the most relevant tool — never guess when a tool can give a better answer
 - Chain tools when needed — e.g. fetch news then send via email or Discord
 
@@ -215,6 +216,23 @@ tools = [
             "required": []
         }
     }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "get_youtube_transcript",
+        "description": "Fetch the transcript of a YouTube video so it can be summarized or explained. Accepts a full YouTube URL (watch, youtu.be, shorts, or embed) or a raw 11-character video ID.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "The YouTube video URL or video ID"
+                }
+            },
+            "required": ["url"]
+        }
+    }
 }
 ]
 
@@ -284,6 +302,8 @@ def run_agent(messages: list):
                         role=args.get("role", ""),
                         company=args.get("company", "")
                     )
+                elif tool_name=="get_youtube_transcript":
+                    result=get_youtube_transcript(args["url"])
                 else:
                     result = f"Unknown tool: {tool_name}"
 

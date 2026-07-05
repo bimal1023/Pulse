@@ -351,6 +351,51 @@ def get_greenhouse_jobs(role: str = "", company: str = "") -> str:
     header = f"Found {len(results)} role(s) matching '{role}' across Greenhouse companies:\n\n" if role else f"Open roles across top companies:\n\n"
     return header + "\n".join(results)
 
+def get_youtube_transcript(url: str) -> str:
+    import re
+    from youtube_transcript_api import YouTubeTranscriptApi
+
+    # Extract the 11-character video ID from common YouTube URL formats
+    match = re.search(
+        r"(?:v=|/shorts/|youtu\.be/|/embed/|/v/)([A-Za-z0-9_-]{11})",
+        url,
+    )
+    if match:
+        video_id = match.group(1)
+    elif re.fullmatch(r"[A-Za-z0-9_-]{11}", url.strip()):
+        video_id = url.strip()
+    else:
+        return "Could not extract a valid YouTube video ID from that input."
+
+    try:
+        # Support both the classic static API and the newer instance API
+        if hasattr(YouTubeTranscriptApi, "get_transcript"):
+            segments = YouTubeTranscriptApi.get_transcript(
+                video_id, languages=["en", "en-US", "en-GB"]
+            )
+            text = " ".join(seg["text"] for seg in segments)
+        else:
+            fetched = YouTubeTranscriptApi().fetch(
+                video_id, languages=["en", "en-US", "en-GB"]
+            )
+            text = " ".join(snippet.text for snippet in fetched)
+
+        text = text.strip()
+        if not text:
+            return "The transcript for this video is empty."
+
+        # Cap length to keep the model's context manageable
+        max_chars = 12000
+        if len(text) > max_chars:
+            text = text[:max_chars] + "\n\n[Transcript truncated — video is long.]"
+
+        return f"Transcript for video {video_id}:\n\n{text}"
+    except Exception as e:
+        return (
+            f"Could not fetch transcript: {str(e)}. "
+            "The video may have transcripts disabled or none available in English."
+        )
+
 def generate_cover_letter(job_description: str) -> str:
     resume_path = os.path.join(os.path.dirname(__file__), "resume.txt")
     resume = open(resume_path).read()
