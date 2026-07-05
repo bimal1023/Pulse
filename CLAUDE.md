@@ -43,6 +43,10 @@ EMAIL_RECEIVER=
 DISCORD_WEBHOOK_URL=
 ADZUNA_APP_ID=
 ADZUNA_APP_KEY=
+WEBSHARE_PROXY_USERNAME=   # Optional; only needed in prod for get_youtube_transcript
+WEBSHARE_PROXY_PASSWORD=   # YouTube blocks datacenter IPs, so deployed transcript
+                           # fetches route through a Webshare RESIDENTIAL proxy.
+                           # Leave unset locally (residential IP works directly).
 ```
 
 **Frontend** (`frontend/.env.local`):

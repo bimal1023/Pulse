@@ -9,4 +9,4 @@ slowapi
 apscheduler
 reportlab
 markdown
-youtube-transcript-api
+youtube-transcript-api>=1.0.0

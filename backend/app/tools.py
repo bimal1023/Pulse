@@ -367,15 +367,29 @@ def get_youtube_transcript(url: str) -> str:
     else:
         return "Could not extract a valid YouTube video ID from that input."
 
+    # YouTube blocks datacenter/cloud IPs (Render, AWS, etc.), so on the
+    # deployed server we route requests through a Webshare residential proxy.
+    # Locally (no proxy env vars) requests go out directly.
+    proxy_config = None
+    proxy_user = os.getenv("WEBSHARE_PROXY_USERNAME")
+    proxy_pass = os.getenv("WEBSHARE_PROXY_PASSWORD")
+    if proxy_user and proxy_pass:
+        from youtube_transcript_api.proxies import WebshareProxyConfig
+        proxy_config = WebshareProxyConfig(
+            proxy_username=proxy_user,
+            proxy_password=proxy_pass,
+        )
+
     try:
         # Support both the classic static API and the newer instance API
-        if hasattr(YouTubeTranscriptApi, "get_transcript"):
+        if proxy_config is None and hasattr(YouTubeTranscriptApi, "get_transcript"):
             segments = YouTubeTranscriptApi.get_transcript(
                 video_id, languages=["en", "en-US", "en-GB"]
             )
             text = " ".join(seg["text"] for seg in segments)
         else:
-            fetched = YouTubeTranscriptApi().fetch(
+            api = YouTubeTranscriptApi(proxy_config=proxy_config)
+            fetched = api.fetch(
                 video_id, languages=["en", "en-US", "en-GB"]
             )
             text = " ".join(snippet.text for snippet in fetched)
