@@ -256,7 +256,7 @@ def send_discord(message: str) -> str:
     except Exception as e:
         return f"Error sending Discord message: {str(e)}"
 
-def get_jobs(keywords: str = "python developer") -> str:
+def get_jobs(keywords: str = "new grad software engineer", max_days_old: int = 30) -> str:
     app_id = os.getenv("ADZUNA_APP_ID")
     app_key = os.getenv("ADZUNA_APP_KEY")
     url = "https://api.adzuna.com/v1/api/jobs/us/search/1"
@@ -265,7 +265,9 @@ def get_jobs(keywords: str = "python developer") -> str:
         "app_key": app_key,
         "what": keywords,
         "results_per_page": 5,
-        "sort_by": "date"
+        "sort_by": "date",
+        # New grad postings close fast, so keep the alert to recent listings.
+        "max_days_old": max_days_old,
     }
 
     try:
@@ -299,7 +301,7 @@ def get_jobs(keywords: str = "python developer") -> str:
     except Exception as e:
         return f"Error fetching jobs: {str(e)}"
 
-def get_greenhouse_jobs(role: str = "", company: str = "") -> str:
+def get_greenhouse_jobs(role: str = "", company: str = "", limit: int = 10) -> str:
     companies = [
         "anthropic", "stripe", "figma", "notion", "airbnb", "reddit",
         "robinhood", "brex", "scale", "huggingface", "cohere", "mistral",
@@ -311,10 +313,15 @@ def get_greenhouse_jobs(role: str = "", company: str = "") -> str:
     if company:
         companies = [company.lower().replace(" ", "")]
 
+    # Without a per-company cap the first board in the list eats the whole
+    # budget, so a broad search only ever returns one company's roles.
+    per_company = limit if company else 3
+
     results = []
     searched = 0
 
     for slug in companies:
+        company_hits = 0
         try:
             url = f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
             response = requests.get(url, timeout=5)
@@ -337,12 +344,13 @@ def get_greenhouse_jobs(role: str = "", company: str = "") -> str:
                     f"Location: {location}\n"
                     f"Apply: {link}\n"
                 )
-                if len(results) >= 10:
+                company_hits += 1
+                if company_hits >= per_company or len(results) >= limit:
                     break
         except Exception:
             continue
 
-        if len(results) >= 10:
+        if len(results) >= limit:
             break
 
     if not results:

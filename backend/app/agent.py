@@ -20,7 +20,7 @@ SYSTEM_PROMPT = """You are Pulse, a smart personal AI assistant and automation a
 - Use `get_arxiv_papers` for academic research, scientific papers, and cutting-edge AI research
 - Use `send_email` to send emails from Bimal's Gmail — if he says "send this to john@example.com", pass that address in the `to` field; otherwise it goes to Bimal's own email by default
 - Use `send_discord` to post a message or summary to Bimal's Discord channel
-- Use `get_jobs` for finding AI, ML, automation engineering jobs and internships
+- Use `get_jobs` for finding jobs — Bimal graduates May 2027 and is targeting full-time new grad Software Engineer, AI Engineer, Applied AI, and Agentic AI roles, not internships
 - Use `generate_cover_letter` when Bimal provides a job description and wants a cover letter PDF sent to his email
 - Use `get_greenhouse_jobs` when Bimal asks about open roles at a specific company (e.g. "jobs at Anthropic", "what is Stripe hiring for")
 - Use `get_youtube_transcript` when Bimal shares a YouTube link or asks you to summarize/explain a video — fetch the transcript, then summarize it in your own words
@@ -166,13 +166,13 @@ tools = [
     "type": "function",
     "function": {
         "name": "get_jobs",
-        "description": "Search for latest AI, ML and automation job listings and internships.",
+        "description": "Search the latest job listings. Bimal is targeting full-time new grad roles (Software Engineer, AI Engineer, Applied AI, Agentic AI, ML Engineer) starting after his May 2027 graduation — not internships.",
         "parameters": {
             "type": "object",
             "properties": {
                 "keywords": {
                     "type": "string",
-                    "description": "Search for latest AI, ML, automation engineering jobs and internships. Searches for roles like ML engineer, AI engineer, AI automation engineer, and related internships."
+                    "description": "Job search keywords, e.g. 'new grad software engineer', 'entry level AI engineer', 'applied AI engineer', 'machine learning engineer'. Prefer entry-level and new-grad phrasing unless Bimal asks for something else."
                 }
             },
             "required": ["keywords"]
@@ -206,7 +206,7 @@ tools = [
             "properties": {
                 "role": {
                     "type": "string",
-                    "description": "Job role or keyword to search for e.g. 'machine learning engineer', 'data scientist', 'intern'"
+                    "description": "Job role or keyword to search for e.g. 'software engineer', 'new grad', 'AI engineer', 'machine learning engineer'"
                 },
                 "company": {
                     "type": "string",

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project: Pulse
 
-A personal AI assistant and automation agent. Users chat with an OpenAI GPT-4.1-mini powered backend that autonomously calls 10 specialized tools (web search, news, GitHub, Arxiv, job search, email, Discord, PDF generation). A scheduler runs 6 automated daily pipelines for briefings, motivation, and job alerts.
+A personal AI assistant and automation agent. Users chat with an OpenAI GPT-4.1-mini powered backend that autonomously calls 11 specialized tools (web search, news, GitHub, Arxiv, job search, email, Discord, YouTube transcripts, PDF generation). A scheduler runs 8 automated daily jobs for briefings, motivation, and new-grad job alerts.
 
 **Stack:** FastAPI (Python) backend · React 19 + Vite frontend · OpenAI GPT-4.1-mini · SQLite · APScheduler · Deployed on Render + Vercel
 
@@ -67,7 +67,7 @@ The loop calls tools iteratively until OpenAI returns a final text response with
 
 ### Tools (`backend/app/tools.py`)
 
-10 tools callable by the agent:
+11 tools callable by the agent:
 
 | Tool | API |
 |------|-----|
@@ -80,7 +80,8 @@ The loop calls tools iteratively until OpenAI returns a final text response with
 | `send_discord` | Discord Webhook |
 | `get_jobs` | Adzuna |
 | `generate_cover_letter` | ReportLab PDF using `backend/app/resume.txt` |
-| `get_greenhouse_jobs` | Greenhouse API |
+| `get_greenhouse_jobs` | Greenhouse API (capped per company so one board can't fill the results) |
+| `get_youtube_transcript` | youtube-transcript-api (via Webshare residential proxy in prod) |
 
 ### API Endpoints (`backend/app/main.py`)
 
@@ -92,16 +93,27 @@ The loop calls tools iteratively until OpenAI returns a final text response with
 
 ### Scheduler (`backend/app/scheduler.py`)
 
-APScheduler runs 6 daily jobs (times in ET):
+APScheduler runs 8 daily jobs (times in ET):
 
 | Time | Job |
 |------|-----|
 | 8:00 AM | Daily AI briefing → email |
 | 8:30 AM | Morning motivation → Discord |
-| Hourly | Job matching vs resume → Discord |
+| 9:00 AM | Job matching vs resume → Discord |
+| 2:30 PM | Job matching vs resume → Discord |
+| 8:00 PM | Job matching vs resume → Discord |
 | 9:00 PM | Evening motivation → Discord |
-| 9:30 PM | Research summary (Arxiv) → Discord |
 | 1:00 AM | AI/ML concept explainer → Discord |
+| 1:20 AM | Research summary (Arxiv) → Discord |
+
+**Job alert targeting:** `send_job_matches` is aimed at full-time **new grad** roles for a May 2027
+graduation — Software Engineer, AI Engineer, Applied AI, and Agentic AI. `_collect_postings()` fans
+out across `JOB_SEARCH_QUERIES` (Adzuna) and `GREENHOUSE_ROLE_QUERIES` (Greenhouse), dedupes by
+(title, company), and drops senior/internship titles via `SENIORITY_EXCLUSIONS` before the model
+scores anything. The alert fires three times a day per `JOB_ALERT_TIMES`. Retarget the search by
+editing those lists at the top of `scheduler.py`;
+retarget the *ranking* by editing `backend/app/resume.txt`, whose "Looking For" section is the
+profile both the job scorer and `generate_cover_letter` read.
 
 ### Frontend (`frontend/src/App.jsx`)
 

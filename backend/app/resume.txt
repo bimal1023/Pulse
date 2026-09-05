@@ -1,46 +1,101 @@
 Name: Bimal Kumal
-Email: bkumal@student.sjny.edu
+Location: New York, NY
+Email: bimalkumal2004@gmail.com
 Phone: 917-821-6444
-linkedin: https://www.linkedin.com/in/bimal-kumal-aa4101285/
+LinkedIn: https://www.linkedin.com/in/bimal-kumal-aa4101285/
+GitHub: https://github.com/bimal1023
+Portfolio: https://bimalkumal7.com.np
+
+Summary:
+Software engineer graduating May 2027 (B.S. Computer Science & Data Science, GPA 3.95) who ships
+full-stack features in Python, TypeScript, and React and uses AI coding agents as part of daily
+development. Shipped four production services to ~700 users in a ten-week internship — writing the
+design docs, scoping with the teams who used them, and owning each through launch and post-launch
+triage. Builds ranking and retrieval systems and the evaluation harnesses that measure whether their
+output is actually good. Based in New York City; available full-time June 2027.
+
 Education:
-- BS in Computer Science & Data Science, St. Joseph's University New York, Brooklyn NY
-- GPA: 3.948 | Expected: May 2027
-- Relevant Coursework: Data Structures & Algorithms, Advanced Programming, Operating Systems,
-  Database Systems, Linear Algebra, Calculus I & II, Software Engineering, Probability & Statistics
+- B.S. in Computer Science & Data Science, St. Joseph's University New York, Brooklyn NY
+- GPA: 3.95/4.00 | Expected: May 2027 | Dean's List, all semesters
+- Relevant Coursework: Data Structures & Algorithms, Object-Oriented Design, Database Systems,
+  Operating Systems, Software Engineering, Advanced Programming, Linear Algebra,
+  Probability & Statistics
 
 Skills:
-- Programming Languages: Python, Java, SQL, R, JavaScript, TypeScript
-- Machine Learning & AI: PyTorch, TensorFlow, Scikit-learn, XGBoost, Hugging Face, LangChain, RAG, Prompt Engineering
-- Software Engineering: Data Structures, Algorithms, OOP, Debugging, Testing, CI/CD, Git, GitHub
-- Cloud & Databases: AWS App Runner, Docker, PostgreSQL, MySQL
-- Data Tools: Pandas, NumPy, Chroma
-
-Projects:
-- Pulse: Personal AI automation agent with 8 tools — web search, news, GitHub trending, Arxiv research,
-  email automation, Discord integration, daily briefing scheduler, and Adzuna job matching.
-  Built with FastAPI, React, Vite, OpenAI GPT-4.1 mini, Tavily, GNews, APScheduler.
-  Deployed on Render (backend) and Vercel (frontend). Includes Docker, CORS, rate limiting,
-  SSE streaming, SQLite history, and mobile responsive UI.
-- Stellanet: Full-stack web application deployed on AWS App Runner. Stack: Python, FastAPI, PostgreSQL,
-  AWS Nova, Docker, Vercel, Authentication. March 2026.
-- LLM-Based Document Intelligence System (RAG + LangChain): Built a retrieval-augmented generation
-  pipeline using LangChain, FAISS vector embeddings, and OpenAI. Optimized search relevance by 30%.
-- Flower Image Classifier (PyTorch, ResNet18): End-to-end image classification pipeline using transfer
-  learning with ResNet18. Achieved 96.98% validation accuracy.
+- Languages: Python, TypeScript, JavaScript, SQL, Java
+- Frontend & Backend: React, Next.js, Tailwind CSS, FastAPI, REST API design, server-sent events,
+  real-time streaming interfaces
+- Databases & Data: PostgreSQL, pgvector, Redis, Celery, SQLite, full-text and vector search,
+  schema design, indexing, caching, scheduled data pipelines
+- Cloud & Infrastructure: AWS (EC2, App Runner, S3, Bedrock), Azure (AKS, ACR, Key Vault), Docker,
+  Kubernetes, Terraform, CI/CD, Git, Linux, production monitoring and incident triage
+- AI & Agents: Claude and OpenAI APIs, agentic tool-use loops, Model Context Protocol (MCP),
+  RAG and hybrid retrieval, multi-agent systems, LLM evaluation harness design, prompt engineering;
+  Claude Code and agentic workflows for daily development
+- Security: SSO and OAuth flows, OTP authentication, server-side token validation,
+  secrets management, rate limiting
 
 Experience:
+- Software Engineer Intern, TransRe — New York, NY (June 2026 - August 2026)
+  * Shipped four production services to ~700 employees in ten weeks — wrote the design docs, scoped
+    requirements with the IT, infrastructure, and finance teams who used them, participated in code
+    review with senior engineers, and owned each through launch, monitoring, and post-launch iteration.
+  * Built a retrieval and ranking system over an internal knowledge base combining pgvector and
+    full-text search, and measured ranking quality against a self-designed 222-question labeled
+    benchmark (91.7% recall@5) before release — the evaluation result, not intuition, decided whether
+    it shipped. Shipped as an IT helpdesk assistant that auto-escalates unresolved questions.
+  * Used AI agents to build production tooling: a Python service with a Claude tool-use loop and
+    custom MCP servers that analyzes $600K/month of multi-cloud usage data, surfacing $150K one-time
+    and $115K/month recurring savings from 400+ inactive licenses.
+  * Strengthened platform security by consolidating duplicated per-service authentication into a
+    single Okta SSO gateway at the Istio edge with centralized secrets management, reducing
+    onboarding for a new internal service from custom auth code to a one-row configuration change.
+  * Debugged production failures across APIs, scheduled jobs, and databases — traced recurring
+    rate-limit errors under load to their root cause and eliminated them with exponential backoff and
+    retry handling; replaced a 3-4 day manual reporting process with automated delivery on Kubernetes.
+
 - Honors Peer Tutor, St. Joseph's University New York (Sep 2023 - Dec 2023)
-  Tutored pre-calculus and introductory programming. Improved student test scores by 20%.
+  * Tutored pre-calculus and introductory programming. Improved student test scores by 20%.
+
+Projects:
+- Arthvion — Multi-Agent Document Analysis Platform (shipped solo), July 2026
+  Python, FastAPI, PostgreSQL, Redis, Next.js, Docker, Terraform, Claude API, MCP
+  * Built and shipped a full-stack agentic product end to end: multi-agent analysis pipeline over
+    public filings producing a complete structured report in under four minutes, with a Next.js front
+    end, Redis-backed streaming, an atomic SQL ledger for transactional correctness, and rate limiting.
+  * Cut compute cost ~90% and improved response time 5x through parallel request fan-out, exponential
+    backoff, and prompt-cache placement, measuring each change against a fixed workload.
+
+- Stellanet — Ranking & Matching Platform, March 2026
+  React, Python, FastAPI, PostgreSQL, AWS App Runner, Amazon Bedrock, Docker
+  * Built a full-stack system that scores and ranks candidate matches across a large research dataset,
+    constraining model output to a strict schema contract to eliminate malformed and fabricated fields,
+    and cutting ranking latency 4x through parallel execution and caching.
+
+- Pulse — Autonomous Automation Agent, April 2026
+  Python, FastAPI, React, APScheduler, SQLite, REST APIs
+  * Built and use daily: an agent chaining 11 custom tools across 10+ external APIs on 8 scheduled
+    pipelines, secured with OTP authentication, server-side token validation, and rate limiting.
+  * Auto-ranks job postings against this resume and generates tailored PDF cover letters, cutting
+    application time from ~30 minutes to under 1 minute.
+
+- LLM-Based Document Intelligence System (RAG + LangChain)
+  * Retrieval-augmented generation pipeline using LangChain, FAISS vector embeddings, and OpenAI.
+    Optimized search relevance by 30%.
 
 Certifications & Awards:
 - Esse Non Videri Scholar: 90% tuition scholarship for academic merit and leadership
+- Dean's List: all semesters (top 5% of students)
 - Introducing Generative AI with AWS — Accenture
 - Supervised Machine Learning (Andrew Ng) — Stanford Online
-- Dean's List: 5 consecutive semesters (top 5% of students)
 
 Looking For:
-- ML Engineer (full-time or internship)
-- AI Engineer (full-time or internship)
-- AI Automation Engineer (full-time or internship)
-- Machine Learning Research roles
-- Remote or New York based positions
+- Target: full-time NEW GRAD roles starting after May 2027 graduation. NOT internships.
+- Titles of interest: Software Engineer (new grad / entry level / associate / university grad),
+  Software Development Engineer (SDE I), AI Engineer, Applied AI Engineer, Agentic AI Engineer,
+  Machine Learning Engineer, Forward Deployed Engineer, Full-Stack Engineer, Backend Engineer
+- Seniority: entry level only — 0-2 years of experience. Exclude senior, staff, principal, lead,
+  manager, director, and any role requiring 3+ years of professional experience.
+- Location: New York City preferred; open to remote and hybrid in the US.
+- Strongest signals for a match: Python/TypeScript backend and full-stack work, LLM and agent
+  systems, RAG and retrieval/ranking, evaluation harnesses, API design, cloud infrastructure.
